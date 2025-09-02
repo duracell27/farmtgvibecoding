@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
     domains: ['telegram.org', 't.me'],
   },
   
+  // Environment variables
+  env: {
+    BOT_TOKEN: '7263698684:AAHvGN7Ea2cin_0JKiPLt2Lvvr8pCAGHPR8'
+  },
+  
   // Add security headers for Telegram WebApp
   async headers() {
     return [

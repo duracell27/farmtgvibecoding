@@ -34,7 +34,7 @@ export const useTelegram = () => {
 
     console.log('useTelegram: Starting initialization');
 
-    const initializeTelegram = () => {
+    const initializeTelegram = async () => {
       try {
         console.log('useTelegram: Attempting to initialize Telegram WebApp');
         
@@ -46,24 +46,62 @@ export const useTelegram = () => {
           tg.ready();
           tg.expand();
           
-          // Get user data from Telegram
-          const tgUser = tg.initDataUnsafe?.user as TelegramUser;
+          // Get init data for validation
+          const initData = tg.initData;
           
-          if (tgUser) {
-            console.log('useTelegram: User data found:', tgUser);
-            // Update user data in store
-            useGameStore.setState({
-              user: {
-                ...user,
-                id: tgUser.id.toString(),
-                firstName: tgUser.first_name,
-                lastName: tgUser.last_name || '',
-                username: tgUser.username || '',
-                avatarUrl: tgUser.photo_url || '',
-              },
-            });
+          if (initData) {
+            console.log('useTelegram: Validating init data');
+            
+            try {
+              // Validate with our API
+              const response = await fetch('/api/telegram/validate', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ initData }),
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                if (result.valid && result.user) {
+                  console.log('useTelegram: User data validated:', result.user);
+                  // Update user data in store
+                  useGameStore.setState({
+                    user: {
+                      ...user,
+                      id: result.user.id.toString(),
+                      firstName: result.user.first_name,
+                      lastName: result.user.last_name || '',
+                      username: result.user.username || '',
+                      avatarUrl: result.user.photo_url || '',
+                    },
+                  });
+                }
+              } else {
+                console.warn('useTelegram: Validation failed');
+              }
+            } catch (apiError) {
+              console.warn('useTelegram: API validation failed, using unsafe data:', apiError);
+              
+              // Fallback to unsafe data
+              const tgUser = tg.initDataUnsafe?.user as TelegramUser;
+              if (tgUser) {
+                console.log('useTelegram: Using unsafe user data:', tgUser);
+                useGameStore.setState({
+                  user: {
+                    ...user,
+                    id: tgUser.id.toString(),
+                    firstName: tgUser.first_name,
+                    lastName: tgUser.last_name || '',
+                    username: tgUser.username || '',
+                    avatarUrl: tgUser.photo_url || '',
+                  },
+                });
+              }
+            }
           } else {
-            console.log('useTelegram: No user data found');
+            console.log('useTelegram: No init data available');
           }
         } else {
           console.log('useTelegram: Telegram WebApp not available');
@@ -121,6 +159,7 @@ declare global {
       WebApp: {
         ready: () => void;
         expand: () => void;
+        initData?: string;
         initDataUnsafe?: {
           user?: TelegramUser;
         };
