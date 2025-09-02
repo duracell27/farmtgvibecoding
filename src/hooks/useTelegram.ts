@@ -44,7 +44,7 @@ export const useTelegram = () => {
       // For development/testing outside Telegram
       setIsReady(true);
     }
-  }, []);
+  }, [user]);
 
   return {
     isReady,
