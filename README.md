@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ферма Telegram Web App
 
-## Getting Started
+Telegram Web App для вирощування рослин з використанням Next.js та Zustand.
 
-First, run the development server:
+## Функції
 
+- 🌱 **Вирощування рослин**: Вирощуйте цибулю з таймером 45 секунд
+- ⏰ **Таймер**: Автоматичне зменшення часу кожну секунду
+- 👆 **Клік для прискорення**: Клікніть на рослину, щоб зменшити час на 1 секунду
+- 📦 **Склад**: Зберігання та продаж вирощеної продукції
+- 💰 **Економіка**: Заробляйте монети за продаж продукції
+- 📈 **Рівні**: Набирайте досвід та підвищуйте рівень
+- 👤 **Інтеграція з Telegram**: Отримуйте дані користувача з Telegram
+
+## Технології
+
+- **Next.js 15** - React фреймворк
+- **TypeScript** - Типізація
+- **Tailwind CSS** - Стилізація
+- **Zustand** - Управління станом
+- **Telegram Web App API** - Інтеграція з Telegram
+
+## Встановлення
+
+1. Клонуйте репозиторій:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd farmtgvibecoding
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Встановіть залежності:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Запустіть проект:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Відкрийте [http://localhost:3000](http://localhost:3000) у браузері
 
-## Learn More
+## Використання в Telegram
 
-To learn more about Next.js, take a look at the following resources:
+1. Створіть бота через [@BotFather](https://t.me/botfather)
+2. Налаштуйте Web App URL на ваш домен
+3. Додайте бота до групи або використовуйте в приватних повідомленнях
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Структура проекту
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/                 # Next.js App Router
+│   ├── layout.tsx      # Головний layout з Telegram скриптом
+│   └── page.tsx        # Головна сторінка
+├── components/         # React компоненти
+│   ├── Header.tsx      # Хедер з інформацією користувача
+│   ├── Plant.tsx       # Компонент рослини
+│   ├── Footer.tsx      # Футер з вкладками
+│   └── Warehouse.tsx   # Компонент складу
+├── hooks/              # React хуки
+│   ├── useTimer.ts     # Хук для таймера гри
+│   └── useTelegram.ts  # Хук для інтеграції з Telegram
+├── store/              # Zustand store
+│   └── gameStore.ts    # Головний store гри
+└── types/              # TypeScript типи
+    └── game.ts         # Типи для гри
+```
 
-## Deploy on Vercel
+## Геймплей
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Ферма**: На головному екрані вирощуйте цибулю
+2. **Таймер**: Кожну секунду час зменшується на 1
+3. **Клік**: Клікніть на рослину, щоб прискорити вирощування
+4. **Збір**: Коли таймер доходить до 0, рослина автоматично потрапляє на склад
+5. **Досвід**: За кожну зібрану рослину отримуйте 10 очків досвіду
+6. **Монети**: За кожну рослину отримуйте 5 монет
+7. **Склад**: Продавайте продукцію за монети (3 монети за цибулю)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Налаштування
+
+Ви можете змінити налаштування гри в `src/store/gameStore.ts`:
+
+- Час вирощування рослини
+- Кількість досвіду за збір
+- Кількість монет за збір
+- Ціна продажу продукції
+
+## Розробка
+
+```bash
+# Запуск в режимі розробки
+npm run dev
+
+# Збірка для продакшену
+npm run build
+
+# Запуск продакшен версії
+npm start
+
+# Лінтинг
+npm run lint
+```
+
+## Ліцензія
+
+MIT License

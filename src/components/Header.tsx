@@ -1,0 +1,51 @@
+'use client';
+
+import { useGameStore } from '@/store/gameStore';
+
+export const Header = () => {
+  const { user } = useGameStore();
+
+  const getProgressPercentage = () => {
+    const currentLevelExp = user.experience % user.experienceToNextLevel;
+    return (currentLevelExp / user.experienceToNextLevel) * 100;
+  };
+
+  return (
+    <header className="bg-green-600 text-white p-4 shadow-lg">
+      <div className="max-w-md mx-auto">
+        {/* User info */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-lg font-bold">
+              {user.firstName} {user.lastName}
+            </h1>
+            {user.username && (
+              <p className="text-sm text-green-100">@{user.username}</p>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold">💰 {user.coins}</div>
+          </div>
+        </div>
+
+        {/* Level and experience */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Рівень {user.level}</span>
+            <span className="text-sm text-green-100">
+              {user.experience % user.experienceToNextLevel} / {user.experienceToNextLevel} досвіду
+            </span>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-green-800 rounded-full h-2">
+            <div
+              className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${getProgressPercentage()}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
