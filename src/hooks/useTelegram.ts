@@ -13,9 +13,16 @@ interface TelegramUser {
 
 export const useTelegram = () => {
   const [isReady, setIsReady] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { user } = useGameStore();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     const initializeTelegram = () => {
       // Check if we're in Telegram WebApp environment
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
@@ -50,28 +57,24 @@ export const useTelegram = () => {
     };
 
     // Wait for Telegram script to load
-    if (typeof window !== 'undefined') {
-      if (window.Telegram?.WebApp) {
-        initializeTelegram();
-      } else {
-        // Wait for script to load
-        const checkTelegram = setInterval(() => {
-          if (window.Telegram?.WebApp) {
-            clearInterval(checkTelegram);
-            initializeTelegram();
-          }
-        }, 100);
-
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkTelegram);
-          setIsReady(true);
-        }, 5000);
-      }
+    if (window.Telegram?.WebApp) {
+      initializeTelegram();
     } else {
-      setIsReady(true);
+      // Wait for script to load
+      const checkTelegram = setInterval(() => {
+        if (window.Telegram?.WebApp) {
+          clearInterval(checkTelegram);
+          initializeTelegram();
+        }
+      }, 100);
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkTelegram);
+        setIsReady(true);
+      }, 5000);
     }
-  }, [user]);
+  }, [isMounted, user]);
 
   return {
     isReady,

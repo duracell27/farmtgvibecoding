@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --tg-viewport-height: 100vh;
+  --tg-viewport-stable-height: 100vh;
 }
 
 @theme inline {
@@ -19,8 +21,13 @@
   }
 }
 
+html {
+  height: var(--tg-viewport-height, 100vh);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: var(--tg-viewport-height, 100vh);
 }
