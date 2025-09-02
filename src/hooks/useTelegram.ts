@@ -24,55 +24,67 @@ export const useTelegram = () => {
     if (!isMounted) return;
 
     const initializeTelegram = () => {
-      // Check if we're in Telegram WebApp environment
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp;
-        
-        // Initialize Telegram WebApp
-        tg.ready();
-        tg.expand();
-        
-        // Get user data from Telegram
-        const tgUser = tg.initDataUnsafe?.user as TelegramUser;
-        
-        if (tgUser) {
-          // Update user data in store
-          useGameStore.setState({
-            user: {
-              ...user,
-              id: tgUser.id.toString(),
-              firstName: tgUser.first_name,
-              lastName: tgUser.last_name || '',
-              username: tgUser.username || '',
-              avatarUrl: tgUser.photo_url || '',
-            },
-          });
+      try {
+        // Check if we're in Telegram WebApp environment
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+          const tg = window.Telegram.WebApp;
+          
+          // Initialize Telegram WebApp
+          tg.ready();
+          tg.expand();
+          
+          // Get user data from Telegram
+          const tgUser = tg.initDataUnsafe?.user as TelegramUser;
+          
+          if (tgUser) {
+            // Update user data in store
+            useGameStore.setState({
+              user: {
+                ...user,
+                id: tgUser.id.toString(),
+                firstName: tgUser.first_name,
+                lastName: tgUser.last_name || '',
+                username: tgUser.username || '',
+                avatarUrl: tgUser.photo_url || '',
+              },
+            });
+          }
         }
-        
-        setIsReady(true);
-      } else {
-        // For development/testing outside Telegram
+      } catch (error) {
+        console.warn('Telegram WebApp initialization failed:', error);
+      } finally {
         setIsReady(true);
       }
     };
 
-    // Wait for Telegram script to load
-    if (window.Telegram?.WebApp) {
-      initializeTelegram();
-    } else {
-      // Wait for script to load
-      const checkTelegram = setInterval(() => {
-        if (window.Telegram?.WebApp) {
-          clearInterval(checkTelegram);
-          initializeTelegram();
-        }
-      }, 100);
+    // Check if we're in Telegram environment
+    const isTelegram = typeof window !== 'undefined' && 
+      (window.location.href.includes('telegram.org') || 
+       window.location.href.includes('t.me') ||
+       window.navigator.userAgent.includes('Telegram'));
 
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(checkTelegram);
-        setIsReady(true);
-      }, 5000);
+    if (isTelegram) {
+      // Wait for Telegram script to load
+      if (window.Telegram?.WebApp) {
+        initializeTelegram();
+      } else {
+        // Wait for script to load
+        const checkTelegram = setInterval(() => {
+          if (window.Telegram?.WebApp) {
+            clearInterval(checkTelegram);
+            initializeTelegram();
+          }
+        }, 100);
+
+        // Timeout after 3 seconds
+        setTimeout(() => {
+          clearInterval(checkTelegram);
+          setIsReady(true);
+        }, 3000);
+      }
+    } else {
+      // For development/testing outside Telegram
+      setIsReady(true);
     }
   }, [isMounted, user]);
 

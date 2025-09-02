@@ -26,6 +26,15 @@ export const Header = () => {
                   width={48}
                   height={48}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to emoji if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<span class="text-2xl">👤</span>';
+                    }
+                  }}
                 />
               ) : (
                 <span className="text-2xl">👤</span>

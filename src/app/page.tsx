@@ -19,8 +19,12 @@ export default function Home() {
 
   // Start game when component mounts
   React.useEffect(() => {
-    if (isReady) {
-      startGame();
+    try {
+      if (isReady) {
+        startGame();
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
     }
   }, [isReady, startGame]);
 
