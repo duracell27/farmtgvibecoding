@@ -3,9 +3,10 @@ import { GameState, GameActions, Plant, User, Warehouse } from '@/types/game';
 
 const initialUser: User = {
   id: '1',
-  firstName: 'Фермер',
-  lastName: '',
-  username: '',
+  firstName: 'Тестовий',
+  lastName: 'Користувач',
+  username: 'test_user',
+  avatarUrl: '',
   level: 1,
   experience: 0,
   experienceToNextLevel: 100,

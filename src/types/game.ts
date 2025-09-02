@@ -11,6 +11,7 @@ export interface User {
   firstName: string;
   lastName?: string;
   username?: string;
+  avatarUrl?: string;
   level: number;
   experience: number;
   experienceToNextLevel: number;
