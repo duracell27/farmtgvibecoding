@@ -16,6 +16,15 @@ export const useTelegram = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { user } = useGameStore();
 
+  // Force ready after 3 seconds maximum
+  useEffect(() => {
+    const forceReady = setTimeout(() => {
+      setIsReady(true);
+    }, 3000);
+
+    return () => clearTimeout(forceReady);
+  }, []);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -23,8 +32,12 @@ export const useTelegram = () => {
   useEffect(() => {
     if (!isMounted) return;
 
+    console.log('useTelegram: Starting initialization');
+
     const initializeTelegram = () => {
       try {
+        console.log('useTelegram: Attempting to initialize Telegram WebApp');
+        
         // Check if we're in Telegram WebApp environment
         if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
           const tg = window.Telegram.WebApp;
@@ -37,6 +50,7 @@ export const useTelegram = () => {
           const tgUser = tg.initDataUnsafe?.user as TelegramUser;
           
           if (tgUser) {
+            console.log('useTelegram: User data found:', tgUser);
             // Update user data in store
             useGameStore.setState({
               user: {
@@ -48,44 +62,51 @@ export const useTelegram = () => {
                 avatarUrl: tgUser.photo_url || '',
               },
             });
+          } else {
+            console.log('useTelegram: No user data found');
           }
+        } else {
+          console.log('useTelegram: Telegram WebApp not available');
         }
       } catch (error) {
-        console.warn('Telegram WebApp initialization failed:', error);
-      } finally {
-        setIsReady(true);
+        console.warn('useTelegram: Initialization failed:', error);
       }
     };
 
-    // Check if we're in Telegram environment
-    const isTelegram = typeof window !== 'undefined' && 
-      (window.location.href.includes('telegram.org') || 
-       window.location.href.includes('t.me') ||
-       window.navigator.userAgent.includes('Telegram'));
+    // Always set ready to true after a short delay
+    // This prevents infinite loading screen
+    const timer = setTimeout(() => {
+      console.log('useTelegram: Setting ready to true after timeout');
+      setIsReady(true);
+    }, 1000);
 
-    if (isTelegram) {
-      // Wait for Telegram script to load
+    // Try to initialize Telegram if available
+    if (typeof window !== 'undefined') {
       if (window.Telegram?.WebApp) {
+        console.log('useTelegram: Telegram WebApp available immediately');
         initializeTelegram();
       } else {
+        console.log('useTelegram: Waiting for Telegram WebApp to load');
         // Wait for script to load
         const checkTelegram = setInterval(() => {
           if (window.Telegram?.WebApp) {
+            console.log('useTelegram: Telegram WebApp loaded');
             clearInterval(checkTelegram);
             initializeTelegram();
           }
         }, 100);
 
-        // Timeout after 3 seconds
+        // Clear interval after 2 seconds
         setTimeout(() => {
+          console.log('useTelegram: Stopping Telegram check');
           clearInterval(checkTelegram);
-          setIsReady(true);
-        }, 3000);
+        }, 2000);
       }
-    } else {
-      // For development/testing outside Telegram
-      setIsReady(true);
     }
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [isMounted, user]);
 
   return {

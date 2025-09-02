@@ -37,6 +37,9 @@ export default function Home() {
           <div className="mt-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
           </div>
+          <p className="text-sm text-gray-500 mt-4">
+            Якщо завантаження триває довго, спробуйте оновити сторінку
+          </p>
         </div>
       </div>
     );
