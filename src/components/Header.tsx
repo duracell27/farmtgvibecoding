@@ -3,9 +3,11 @@
 import Image from 'next/image';
 import { useGameStore } from '@/store/gameStore';
 import { useEffect } from 'react';
+import { useGameSync } from '@/hooks/useGameSync';
 
 export const Header = () => {
   const { user, forceStateUpdate } = useGameStore();
+  const { syncStatus, lastSyncTime, isAutoSyncEnabled } = useGameSync();
 
   // Force state update when component mounts to ensure data is fresh
   useEffect(() => {
@@ -60,6 +62,31 @@ export const Header = () => {
           
           <div className="text-right">
             <div className="text-2xl font-bold">💰 {user.coins}</div>
+            {/* Sync status indicator */}
+            {isAutoSyncEnabled && (
+              <div className="flex items-center justify-end mt-1">
+                {syncStatus === 'saving' && (
+                  <div className="flex items-center text-xs text-green-200">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-white mr-1"></div>
+                    Збереження...
+                  </div>
+                )}
+                {syncStatus === 'loading' && (
+                  <div className="flex items-center text-xs text-green-200">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-white mr-1"></div>
+                    Завантаження...
+                  </div>
+                )}
+                {syncStatus === 'error' && (
+                  <div className="text-xs text-red-200">⚠️ Помилка синхронізації</div>
+                )}
+                {syncStatus === 'idle' && lastSyncTime && (
+                  <div className="text-xs text-green-200">
+                    ✅ Синхронізовано
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

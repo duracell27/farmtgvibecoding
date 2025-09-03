@@ -6,10 +6,12 @@ import { Farm } from '@/components/Farm';
 import { Footer } from '@/components/Footer';
 import { Warehouse } from '@/components/Warehouse';
 import { Achievements } from '@/components/Achievements';
+import { Rating } from '@/components/Rating';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useGameStore } from '@/store/gameStore';
 import { useTimer } from '@/hooks/useTimer';
 import { useTelegram } from '@/hooks/useTelegram';
+import { useGameSync } from '@/hooks/useGameSync';
 
 export default function Home() {
   const { activeTab, startGame } = useGameStore();
@@ -17,6 +19,9 @@ export default function Home() {
   
   // Start the game timer
   useTimer();
+  
+  // Initialize game sync
+  useGameSync();
 
   // Start game when component mounts
   React.useEffect(() => {
@@ -56,8 +61,10 @@ export default function Home() {
             <Farm />
           ) : activeTab === 'warehouse' ? (
             <Warehouse />
-          ) : (
+          ) : activeTab === 'achievements' ? (
             <Achievements />
+          ) : (
+            <Rating />
           )}
         </main>
         

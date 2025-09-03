@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   
   // Environment variables
   env: {
-    BOT_TOKEN: '7263698684:AAHvGN7Ea2cin_0JKiPLt2Lvvr8pCAGHPR8'
+    BOT_TOKEN: process.env.BOT_TOKEN
   },
   
   // Add security headers for Telegram WebApp

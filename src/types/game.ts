@@ -54,6 +54,20 @@ export interface User {
   totalHarvests: number;
 }
 
+export type RatingType = 'level' | 'harvests' | 'clicks';
+
+export interface RatingEntry {
+  user: User;
+  rank: number;
+  value: number;
+}
+
+export interface RatingData {
+  type: RatingType;
+  entries: RatingEntry[];
+  totalUsers: number;
+}
+
 export interface Warehouse {
   dill: number;
   parsley: number;
@@ -73,12 +87,16 @@ export interface GameState {
   user: User;
   currentPlant: Plant | null;
   warehouse: Warehouse;
-  activeTab: 'farm' | 'warehouse' | 'achievements';
+  activeTab: 'farm' | 'warehouse' | 'achievements' | 'rating';
   isGameRunning: boolean;
   isHarvesting: boolean;
   farmPlots: FarmPlot[];
   selectedPlantType: PlantType | null;
   achievements: Achievement[];
+  syncStatus: 'idle' | 'saving' | 'loading' | 'error';
+  lastSyncTime: number | null;
+  ratingData: RatingData | null;
+  activeRatingType: RatingType;
 }
 
 export interface GameActions {
@@ -101,7 +119,7 @@ export interface GameActions {
   selectPlantType: (plantType: PlantType | null) => void;
   
   // UI actions
-  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements') => void;
+  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements' | 'rating') => void;
   startGame: () => void;
   stopGame: () => void;
   
@@ -111,6 +129,15 @@ export interface GameActions {
   // Achievement actions
   claimAchievementReward: (achievementType: AchievementType, level: number) => void;
   updateAchievements: () => void;
+  
+  // Database sync actions
+  saveGameState: () => Promise<void>;
+  loadGameState: () => Promise<void>;
+  setSyncStatus: (status: 'idle' | 'saving' | 'loading' | 'error') => void;
+  
+  // Rating actions
+  loadRatingData: (type: RatingType) => Promise<void>;
+  setActiveRatingType: (type: RatingType) => void;
   
   // State management
   forceStateUpdate: () => void;

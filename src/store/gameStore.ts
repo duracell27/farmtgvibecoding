@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType } from '@/types/game';
+import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType, RatingType } from '@/types/game';
 
 const initialUser: User = {
   id: '1',
@@ -237,6 +237,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   farmPlots: generateFarmPlots(),
   selectedPlantType: null,
   achievements: Object.values(ACHIEVEMENT_DATA),
+  syncStatus: 'idle',
+  lastSyncTime: null,
+  ratingData: null,
+  activeRatingType: 'level',
 
   // Plant actions
   createNewPlant: () => {
@@ -276,7 +280,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, saveGameState } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -331,6 +335,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       
       // Update achievements after harvest
       setTimeout(() => get().updateAchievements(), 0);
+
+      // Save game state after important action
+      setTimeout(() => saveGameState(), 1000);
 
       // Force state update for Telegram WebApp
       setTimeout(() => {
@@ -437,7 +444,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => {
-    const { warehouse, user } = get();
+    const { warehouse, user, saveGameState } = get();
     if (warehouse[product] >= amount) {
       // Find the plant data to get sell price
       const plantType = product as PlantType;
@@ -456,6 +463,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         },
       });
 
+      // Save game state after selling
+      setTimeout(() => saveGameState(), 1000);
+
       // Force state update for Telegram WebApp
       setTimeout(() => {
         const state = get();
@@ -466,7 +476,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Farm actions
   unlockPlot: (plotId: string) => {
-    const { farmPlots, user } = get();
+    const { farmPlots, user, saveGameState } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && !plot.isUnlocked && user.coins >= plot.unlockPrice) {
@@ -486,16 +496,31 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       
       // Update achievements after unlocking plot
       setTimeout(() => get().updateAchievements(), 0);
+      
+      // Save game state after unlocking plot
+      setTimeout(() => saveGameState(), 1000);
     }
   },
 
   selectPlantType: (plantType: PlantType | null) => {
     set({ selectedPlantType: plantType });
+    
+    // Save game state when plant type is selected
+    setTimeout(() => {
+      const { saveGameState } = get();
+      saveGameState();
+    }, 1000);
   },
 
   // UI actions
-  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements') => {
+  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements' | 'rating') => {
     set({ activeTab: tab });
+    
+    // Save game state when tab is changed
+    setTimeout(() => {
+      const { saveGameState } = get();
+      saveGameState();
+    }, 1000);
   },
 
   startGame: () => {
@@ -618,5 +643,126 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     });
     
     set({ achievements: updatedAchievements });
+  },
+
+  // Database sync actions
+  saveGameState: async () => {
+    const state = get();
+    
+    // For testing purposes, allow test user ID '1' to work in development
+    const isTestMode = process.env.NODE_ENV === 'development';
+    
+    if (!state.user.id || (state.user.id === '1' && !isTestMode)) {
+      console.log('saveGameState: Skipping save - no valid user ID or test user in production');
+      return;
+    }
+
+    try {
+      set({ syncStatus: 'saving' });
+      
+      const response = await fetch('/api/game/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(state),
+      });
+
+      if (response.ok) {
+        await response.json();
+        set({ 
+          syncStatus: 'idle',
+          lastSyncTime: Date.now()
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('saveGameState: Error', error);
+      set({ syncStatus: 'error' });
+    }
+  },
+
+  loadGameState: async () => {
+    const { user } = get();
+    
+    // For testing purposes, allow test user ID '1' to work in development
+    const isTestMode = process.env.NODE_ENV === 'development';
+    
+    if (!user.id || (user.id === '1' && !isTestMode)) {
+      console.log('loadGameState: Skipping load - no valid user ID or test user in production');
+      return;
+    }
+
+    try {
+      set({ syncStatus: 'loading' });
+      
+      const response = await fetch(`/api/game/load?userId=${user.id}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.gameState) {
+          // Merge saved state with current state, preserving some local state
+          const currentState = get();
+          const savedState = result.gameState;
+          
+          set({
+            user: savedState.user,
+            warehouse: savedState.warehouse,
+            farmPlots: savedState.farmPlots,
+            achievements: savedState.achievements,
+            // Restore saved UI state
+            activeTab: savedState.activeTab || currentState.activeTab,
+            selectedPlantType: savedState.selectedPlantType || currentState.selectedPlantType,
+            syncStatus: 'idle',
+            lastSyncTime: Date.now()
+          });
+        } else {
+          set({ syncStatus: 'idle' });
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('loadGameState: Error', error);
+      set({ syncStatus: 'error' });
+    }
+  },
+
+  setSyncStatus: (status: 'idle' | 'saving' | 'loading' | 'error') => {
+    set({ syncStatus: status });
+  },
+
+  // Rating actions
+  loadRatingData: async (type: RatingType) => {
+    try {
+      set({ syncStatus: 'loading' });
+      
+      const response = await fetch(`/api/rating?type=${type}&limit=50`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          set({ 
+            ratingData: result.data,
+            activeRatingType: type,
+            syncStatus: 'idle'
+          });
+        } else {
+          set({ syncStatus: 'idle' });
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('loadRatingData: Error', error);
+      set({ syncStatus: 'error' });
+    }
+  },
+
+  setActiveRatingType: (type: RatingType) => {
+    set({ activeRatingType: type });
   },
 }));
