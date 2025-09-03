@@ -40,16 +40,26 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   clickPlant: () => {
-    const { currentPlant, isHarvesting } = get();
-    if (currentPlant && currentPlant.timeLeft > 0 && !isHarvesting) {
-      const newTimeLeft = Math.max(0, currentPlant.timeLeft - 1);
-      set({
-        currentPlant: {
-          ...currentPlant,
-          timeLeft: newTimeLeft,
-          isReady: newTimeLeft === 0,
-        },
-      });
+    const { currentPlant, isHarvesting, harvestPlant } = get();
+    if (currentPlant && !isHarvesting) {
+      if (currentPlant.timeLeft > 0) {
+        const newTimeLeft = Math.max(0, currentPlant.timeLeft - 1);
+        set({
+          currentPlant: {
+            ...currentPlant,
+            timeLeft: newTimeLeft,
+            isReady: newTimeLeft === 0,
+          },
+        });
+        
+        // If time reaches 0, harvest immediately
+        if (newTimeLeft === 0) {
+          harvestPlant();
+        }
+      } else if (currentPlant.isReady) {
+        // If plant is ready, harvest it
+        harvestPlant();
+      }
     }
   },
 
@@ -60,22 +70,20 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       set({ isHarvesting: true });
 
       // Update all state at once to prevent flickering
+      const newUser = {
+        ...user,
+        experience: user.experience + 10,
+        coins: user.coins + 5,
+      };
+
       set({
         warehouse: {
           ...warehouse,
           onion: warehouse.onion + 1,
         },
-        user: {
-          ...user,
-          experience: user.experience + 10,
-          coins: user.coins + 5,
-        },
-      });
-
-      // Create new plant and reset harvesting flag
-      set({ 
+        user: newUser,
         currentPlant: createPlant(),
-        isHarvesting: false 
+        isHarvesting: false,
       });
     }
   },
@@ -121,16 +129,22 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => {
-    const { warehouse, addCoins } = get();
+    const { warehouse, user } = get();
     if (warehouse[product] >= amount) {
       const price = product === 'onion' ? 3 : 0; // 3 coins per onion
+      const totalCoins = price * amount;
+      
+      // Update warehouse and coins at once to prevent flickering
       set({
         warehouse: {
           ...warehouse,
           [product]: warehouse[product] - amount,
         },
+        user: {
+          ...user,
+          coins: user.coins + totalCoins,
+        },
       });
-      addCoins(price * amount);
     }
   },
 
@@ -162,7 +176,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
       // Auto harvest when ready (only once)
       if (newTimeLeft === 0) {
-        harvestPlant();
+        // Use setTimeout to ensure state is updated before harvesting
+        setTimeout(() => {
+          harvestPlant();
+        }, 0);
       }
     }
   },
