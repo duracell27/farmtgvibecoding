@@ -13,7 +13,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { db } = await connectToDatabase();
+    let db;
+    try {
+      const connection = await connectToDatabase();
+      db = connection.db;
+    } catch (dbError) {
+      console.error('Load API: Database connection failed:', dbError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    
     const collection = db.collection('game_states');
 
     const gameData = await collection.findOne({ userId });

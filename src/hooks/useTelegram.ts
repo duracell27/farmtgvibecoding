@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '@/store/gameStore';
+import { getApiUrl } from '@/lib/api';
 
 interface TelegramUser {
   id: number;
@@ -63,7 +64,7 @@ export const useTelegram = () => {
               
               try {
                 // Validate with our API
-                const response = await fetch('/api/telegram/validate', {
+                const response = await fetch(getApiUrl('/api/telegram/validate'), {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

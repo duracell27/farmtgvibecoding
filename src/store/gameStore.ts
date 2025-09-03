@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType, RatingType } from '@/types/game';
+import { getApiUrl } from '@/lib/api';
 
 const initialUser: User = {
   id: '1',
@@ -666,7 +667,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'saving' });
       
-      const response = await fetch('/api/game/save', {
+      const apiUrl = getApiUrl('/api/game/save');
+      console.log('saveGameState: Making request to:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -709,7 +713,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'loading' });
       
-      const response = await fetch(`/api/game/load?userId=${user.id}`);
+      const apiUrl = getApiUrl(`/api/game/load?userId=${user.id}`);
+      console.log('loadGameState: Making request to:', apiUrl);
+      
+      const response = await fetch(apiUrl);
       
       if (response.ok) {
         const result = await response.json();
@@ -751,7 +758,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'loading' });
       
-      const response = await fetch(`/api/rating?type=${type}&limit=50`);
+      const apiUrl = getApiUrl(`/api/rating?type=${type}&limit=50`);
+      console.log('loadRatingData: Making request to:', apiUrl);
+      
+      const response = await fetch(apiUrl);
       
       if (response.ok) {
         const result = await response.json();

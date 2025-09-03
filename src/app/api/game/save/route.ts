@@ -16,7 +16,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { db } = await connectToDatabase();
+    let db;
+    try {
+      const connection = await connectToDatabase();
+      db = connection.db;
+    } catch (dbError) {
+      console.error('Save API: Database connection failed:', dbError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    
     const collection = db.collection('game_states');
 
     console.log('Save API: Connected to database, saving for user:', gameState.user.id);

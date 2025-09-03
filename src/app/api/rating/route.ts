@@ -15,7 +15,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { db } = await connectToDatabase();
+    let db;
+    try {
+      const connection = await connectToDatabase();
+      db = connection.db;
+    } catch (dbError) {
+      console.error('Rating API: Database connection failed:', dbError);
+      return NextResponse.json(
+        { success: false, error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    
     const gameStatesCollection = db.collection('game_states');
 
     // Build sort criteria based on rating type

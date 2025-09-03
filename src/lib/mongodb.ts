@@ -28,15 +28,52 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   }
 
   if (!cached.promise) {
-    cached.promise = MongoClient.connect(MONGODB_URI).then((client) => {
+    const options = {
+      // Connection options for Vercel compatibility
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferMaxEntries: 0,
+      // SSL options for Vercel
+      ssl: true,
+      sslValidate: false,
+      // Retry options
+      retryWrites: true,
+      retryReads: true,
+      // Connection timeout
+      connectTimeoutMS: 10000,
+      // Heartbeat frequency
+      heartbeatFrequencyMS: 10000,
+    };
+
+    cached.promise = MongoClient.connect(MONGODB_URI, options).then((client) => {
+      console.log('MongoDB: Connected successfully');
       return {
         client,
         db: client.db(MONGODB_DB),
       };
+    }).catch((error) => {
+      console.error('MongoDB: Connection failed:', error);
+      // Clear the promise so we can retry
+      cached.promise = null;
+      throw error;
     });
   }
   cached.conn = await cached.promise;
   return cached.conn;
+}
+
+// Function to test database connection
+export async function testConnection(): Promise<boolean> {
+  try {
+    const { db } = await connectToDatabase();
+    await db.admin().ping();
+    console.log('MongoDB: Connection test successful');
+    return true;
+  } catch (error) {
+    console.error('MongoDB: Connection test failed:', error);
+    return false;
+  }
 }
 
 // Extend global type for TypeScript
