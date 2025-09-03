@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '@/store/gameStore';
 
 interface TelegramUser {
@@ -15,6 +15,8 @@ export const useTelegram = () => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user } = useGameStore();
+  const validationAttempted = useRef(false);
+  const lastValidationTime = useRef(0);
 
   // Force ready after 3 seconds maximum
   useEffect(() => {
@@ -49,18 +51,25 @@ export const useTelegram = () => {
           // Get init data for validation
           const initData = tg.initData;
           
-          if (initData) {
-            console.log('useTelegram: Validating init data');
+          if (initData && !validationAttempted.current) {
+            const now = Date.now();
+            const timeSinceLastValidation = now - lastValidationTime.current;
             
-            try {
-              // Validate with our API
-              const response = await fetch('/api/telegram/validate', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ initData }),
-              });
+            // Only validate once per session or if more than 5 minutes have passed
+            if (timeSinceLastValidation > 5 * 60 * 1000) {
+              console.log('useTelegram: Validating init data');
+              validationAttempted.current = true;
+              lastValidationTime.current = now;
+              
+              try {
+                // Validate with our API
+                const response = await fetch('/api/telegram/validate', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ initData }),
+                });
               
               if (response.ok) {
                 const result = await response.json();
@@ -92,34 +101,39 @@ export const useTelegram = () => {
               } else {
                 console.warn('useTelegram: Validation failed');
               }
-            } catch (apiError) {
-              console.warn('useTelegram: API validation failed, using unsafe data:', apiError);
-              
-              // Fallback to unsafe data
-              const tgUser = tg.initDataUnsafe?.user as TelegramUser;
-              if (tgUser) {
-                console.log('useTelegram: Using unsafe user data:', tgUser);
+              } catch (apiError) {
+                console.warn('useTelegram: API validation failed, using unsafe data:', apiError);
                 
-                // Get current state to preserve game progress
-                const currentState = useGameStore.getState();
-                
-                useGameStore.setState({
-                  user: {
-                    ...currentState.user,
-                    id: tgUser.id.toString(),
-                    firstName: tgUser.first_name,
-                    lastName: tgUser.last_name || '',
-                    username: tgUser.username || '',
-                    avatarUrl: tgUser.photo_url || '',
-                    // Preserve game progress (level, experience, coins)
-                    level: currentState.user.level,
-                    experience: currentState.user.experience,
-                    experienceToNextLevel: currentState.user.experienceToNextLevel,
-                    coins: currentState.user.coins,
-                  },
-                });
+                // Fallback to unsafe data
+                const tgUser = tg.initDataUnsafe?.user as TelegramUser;
+                if (tgUser) {
+                  console.log('useTelegram: Using unsafe user data:', tgUser);
+                  
+                  // Get current state to preserve game progress
+                  const currentState = useGameStore.getState();
+                  
+                  useGameStore.setState({
+                    user: {
+                      ...currentState.user,
+                      id: tgUser.id.toString(),
+                      firstName: tgUser.first_name,
+                      lastName: tgUser.last_name || '',
+                      username: tgUser.username || '',
+                      avatarUrl: tgUser.photo_url || '',
+                      // Preserve game progress (level, experience, coins)
+                      level: currentState.user.level,
+                      experience: currentState.user.experience,
+                      experienceToNextLevel: currentState.user.experienceToNextLevel,
+                      coins: currentState.user.coins,
+                    },
+                  });
+                }
               }
+            } else {
+              console.log('useTelegram: Validation skipped - already attempted recently');
             }
+          } else if (initData) {
+            console.log('useTelegram: Validation already attempted in this session');
           } else {
             console.log('useTelegram: No init data available');
           }
