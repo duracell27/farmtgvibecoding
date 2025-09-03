@@ -1,5 +1,25 @@
 export type PlantType = 'dill' | 'parsley' | 'onion' | 'cucumber' | 'tomato';
 
+export type AchievementType = 'clicks' | 'harvests' | 'plots';
+
+export interface AchievementLevel {
+  level: number;
+  requirement: number;
+  reward: number;
+  description: string;
+}
+
+export interface Achievement {
+  type: AchievementType;
+  name: string;
+  description: string;
+  icon: string;
+  levels: AchievementLevel[];
+  currentLevel: number;
+  currentProgress: number;
+  claimedLevels: number[];
+}
+
 export interface PlantData {
   type: PlantType;
   name: string;
@@ -30,6 +50,8 @@ export interface User {
   experience: number;
   experienceToNextLevel: number;
   coins: number;
+  totalClicks: number;
+  totalHarvests: number;
 }
 
 export interface Warehouse {
@@ -51,11 +73,12 @@ export interface GameState {
   user: User;
   currentPlant: Plant | null;
   warehouse: Warehouse;
-  activeTab: 'farm' | 'warehouse';
+  activeTab: 'farm' | 'warehouse' | 'achievements';
   isGameRunning: boolean;
   isHarvesting: boolean;
   farmPlots: FarmPlot[];
   selectedPlantType: PlantType | null;
+  achievements: Achievement[];
 }
 
 export interface GameActions {
@@ -78,12 +101,16 @@ export interface GameActions {
   selectPlantType: (plantType: PlantType | null) => void;
   
   // UI actions
-  setActiveTab: (tab: 'farm' | 'warehouse') => void;
+  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements') => void;
   startGame: () => void;
   stopGame: () => void;
   
   // Timer actions
   decrementTimer: () => void;
+  
+  // Achievement actions
+  claimAchievementReward: (achievementType: AchievementType, level: number) => void;
+  updateAchievements: () => void;
   
   // State management
   forceStateUpdate: () => void;

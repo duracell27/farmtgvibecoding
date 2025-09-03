@@ -181,7 +181,7 @@ export const Farm = () => {
                         alt={PLANT_DATA[plot.plant.type].name}
                         width={48}
                         height={48}
-                        className="w-12 h-12 object-contain"
+                        className="w-16 h-16 object-contain"
                       />
                       
                       {/* Timer */}

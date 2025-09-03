@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot } from '@/types/game';
+import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType } from '@/types/game';
 
 const initialUser: User = {
   id: '1',
@@ -11,6 +11,8 @@ const initialUser: User = {
   experience: 0,
   experienceToNextLevel: 50, // Level 2 requires 50 exp
   coins: 10, // Start with 10 coins
+  totalClicks: 0,
+  totalHarvests: 0,
 };
 
 // Plant data configuration
@@ -74,6 +76,64 @@ export const LEVEL_EXPERIENCE_REQUIREMENTS = {
   4: 155,
   5: 280,
   6: 550,
+};
+
+// Achievement data configuration
+export const ACHIEVEMENT_DATA: Record<AchievementType, Achievement> = {
+  clicks: {
+    type: 'clicks',
+    name: 'Клікер',
+    description: 'Кількість кліків',
+    icon: '👆',
+    levels: [
+      { level: 1, requirement: 100, reward: 10, description: '100 кліків' },
+      { level: 2, requirement: 500, reward: 25, description: '500 кліків' },
+      { level: 3, requirement: 1000, reward: 50, description: '1,000 кліків' },
+      { level: 4, requirement: 10000, reward: 300, description: '10,000 кліків' },
+      { level: 5, requirement: 50000, reward: 1000, description: '50,000 кліків' },
+      { level: 6, requirement: 100000, reward: 2500, description: '100,000 кліків' },
+      { level: 7, requirement: 1000000, reward: 12500, description: '1,000,000 кліків' },
+    ],
+    currentLevel: 0,
+    currentProgress: 0,
+    claimedLevels: [],
+  },
+  harvests: {
+    type: 'harvests',
+    name: 'Збирач',
+    description: 'Кількість зібраних урожаїв',
+    icon: '🌾',
+    levels: [
+      { level: 1, requirement: 10, reward: 10, description: '10 урожаїв' },
+      { level: 2, requirement: 50, reward: 25, description: '50 урожаїв' },
+      { level: 3, requirement: 100, reward: 50, description: '100 урожаїв' },
+      { level: 4, requirement: 1000, reward: 300, description: '1,000 урожаїв' },
+      { level: 5, requirement: 5000, reward: 1000, description: '5,000 урожаїв' },
+      { level: 6, requirement: 10000, reward: 2500, description: '10,000 урожаїв' },
+      { level: 7, requirement: 100000, reward: 12500, description: '100,000 урожаїв' },
+    ],
+    currentLevel: 0,
+    currentProgress: 0,
+    claimedLevels: [],
+  },
+  plots: {
+    type: 'plots',
+    name: 'Землевласник',
+    description: 'Кількість куплених грядок',
+    icon: '🏡',
+    levels: [
+      { level: 1, requirement: 3, reward: 10, description: '3 грядки' },
+      { level: 2, requirement: 5, reward: 25, description: '5 грядок' },
+      { level: 3, requirement: 8, reward: 50, description: '8 грядок' },
+      { level: 4, requirement: 12, reward: 300, description: '12 грядок' },
+      { level: 5, requirement: 20, reward: 1000, description: '20 грядок' },
+      { level: 6, requirement: 30, reward: 2500, description: '30 грядок' },
+      { level: 7, requirement: 50, reward: 12500, description: '50 грядок' },
+    ],
+    currentLevel: 0,
+    currentProgress: 0,
+    claimedLevels: [],
+  },
 };
 
 const initialWarehouse: Warehouse = {
@@ -176,6 +236,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   isHarvesting: false,
   farmPlots: generateFarmPlots(),
   selectedPlantType: null,
+  achievements: Object.values(ACHIEVEMENT_DATA),
 
   // Plant actions
   createNewPlant: () => {
@@ -183,8 +244,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   clickPlant: (plotId: string) => {
-    const { farmPlots, isHarvesting, harvestPlant } = get();
+    const { farmPlots, isHarvesting, harvestPlant, user } = get();
     const plot = farmPlots.find(p => p.id === plotId);
+    
+    // Increment total clicks
+    set({ user: { ...user, totalClicks: user.totalClicks + 1 } });
+    
+    // Update achievements after click
+    setTimeout(() => get().updateAchievements(), 0);
     
     if (plot && plot.plant && !isHarvesting) {
       if (plot.plant.timeLeft > 0) {
@@ -227,6 +294,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         level: levelProgression.level,
         experience: levelProgression.experience,
         experienceToNextLevel: levelProgression.experienceToNextLevel,
+        totalHarvests: user.totalHarvests + 1,
         // No coins for harvesting - only for selling in warehouse
       };
 
@@ -260,6 +328,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         farmPlots: updatedPlots,
         isHarvesting: false,
       });
+      
+      // Update achievements after harvest
+      setTimeout(() => get().updateAchievements(), 0);
 
       // Force state update for Telegram WebApp
       setTimeout(() => {
@@ -412,6 +483,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           coins: user.coins - plot.unlockPrice,
         },
       });
+      
+      // Update achievements after unlocking plot
+      setTimeout(() => get().updateAchievements(), 0);
     }
   },
 
@@ -420,7 +494,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   // UI actions
-  setActiveTab: (tab: 'farm' | 'warehouse') => {
+  setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements') => {
     set({ activeTab: tab });
   },
 
@@ -470,5 +544,79 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       currentPlant: state.currentPlant
     });
     set({ ...state });
+  },
+
+  // Achievement actions
+  claimAchievementReward: (achievementType: AchievementType, level: number) => {
+    const { achievements, user } = get();
+    const achievement = achievements.find(a => a.type === achievementType);
+    
+    if (!achievement) return;
+    
+    const levelData = achievement.levels.find(l => l.level === level);
+    if (!levelData || achievement.claimedLevels.includes(level)) return;
+    
+    // Check if user has reached this level
+    let currentProgress = 0;
+    switch (achievementType) {
+      case 'clicks':
+        currentProgress = user.totalClicks;
+        break;
+      case 'harvests':
+        currentProgress = user.totalHarvests;
+        break;
+      case 'plots':
+        currentProgress = get().farmPlots.filter(p => p.isUnlocked).length;
+        break;
+    }
+    
+    if (currentProgress >= levelData.requirement) {
+      // Add reward coins
+      set({ 
+        user: { ...user, coins: user.coins + levelData.reward },
+        achievements: achievements.map(a => 
+          a.type === achievementType 
+            ? { ...a, claimedLevels: [...a.claimedLevels, level] }
+            : a
+        )
+      });
+    }
+  },
+
+  updateAchievements: () => {
+    const { achievements, user, farmPlots } = get();
+    
+    const updatedAchievements = achievements.map(achievement => {
+      let currentProgress = 0;
+      let currentLevel = 0;
+      
+      switch (achievement.type) {
+        case 'clicks':
+          currentProgress = user.totalClicks;
+          break;
+        case 'harvests':
+          currentProgress = user.totalHarvests;
+          break;
+        case 'plots':
+          currentProgress = farmPlots.filter(p => p.isUnlocked).length;
+          break;
+      }
+      
+      // Find current level based on progress
+      for (let i = achievement.levels.length - 1; i >= 0; i--) {
+        if (currentProgress >= achievement.levels[i].requirement) {
+          currentLevel = achievement.levels[i].level;
+          break;
+        }
+      }
+      
+      return {
+        ...achievement,
+        currentLevel,
+        currentProgress,
+      };
+    });
+    
+    set({ achievements: updatedAchievements });
   },
 }));

@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { Farm } from '@/components/Farm';
 import { Footer } from '@/components/Footer';
 import { Warehouse } from '@/components/Warehouse';
+import { Achievements } from '@/components/Achievements';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useGameStore } from '@/store/gameStore';
 import { useTimer } from '@/hooks/useTimer';
@@ -53,8 +54,10 @@ export default function Home() {
         <main className="pb-20">
           {activeTab === 'farm' ? (
             <Farm />
-          ) : (
+          ) : activeTab === 'warehouse' ? (
             <Warehouse />
+          ) : (
+            <Achievements />
           )}
         </main>
         

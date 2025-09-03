@@ -24,6 +24,32 @@ export const Warehouse = () => {
     }
   };
 
+  const handleSellAll = (product: keyof typeof warehouse) => {
+    if (warehouse[product] > 0) {
+      sellProduct(product, warehouse[product]);
+    }
+  };
+
+  const handleSellEverything = () => {
+    Object.entries(warehouse).forEach(([product, amount]) => {
+      if (amount > 0) {
+        sellProduct(product as keyof typeof warehouse, amount);
+      }
+    });
+  };
+
+  const getTotalValue = () => {
+    return Object.entries(warehouse).reduce((total, [product, amount]) => {
+      const productInfo = getProductInfo(product as keyof typeof warehouse);
+      return total + (amount * productInfo.price);
+    }, 0);
+  };
+
+  const getProductValue = (product: keyof typeof warehouse) => {
+    const productInfo = getProductInfo(product);
+    return warehouse[product] * productInfo.price;
+  };
+
   const getProductInfo = (product: keyof typeof warehouse) => {
     const plantData = PLANT_DATA[product as PlantType];
     return {
@@ -36,9 +62,19 @@ export const Warehouse = () => {
   return (
     <div className="p-4 pb-20">
       <div className="max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
-          📦 Склад
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            📦 Склад
+          </h2>
+          {getTotalValue() > 0 && (
+            <button
+              onClick={handleSellEverything}
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200 font-medium text-sm"
+            >
+              Продати все ({getTotalValue().toLocaleString()} 💰)
+            </button>
+          )}
+        </div>
         
         <div className="space-y-4">
           {Object.entries(warehouse)
@@ -77,32 +113,47 @@ export const Warehouse = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      min="1"
-                      max={amount}
-                      value={sellAmount}
-                      onChange={(e) => setSellAmount(Math.max(1, Math.min(amount, parseInt(e.target.value) || 1)))}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-center"
-                      onBlur={() => {
-                        // Hide keyboard when input loses focus
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                      }}
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max={amount}
+                        value={sellAmount}
+                        onChange={(e) => setSellAmount(Math.max(1, Math.min(amount, parseInt(e.target.value) || 1)))}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-center text-black placeholder:text-black"
+                        onBlur={() => {
+                          // Hide keyboard when input loses focus
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          handleSell(product as keyof typeof warehouse, sellAmount);
+                          // Hide keyboard after selling
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+                        }}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 font-medium"
+                      >
+                        Продати
+                      </button>
+                    </div>
+                    
                     <button
                       onClick={() => {
-                        handleSell(product as keyof typeof warehouse, sellAmount);
+                        handleSellAll(product as keyof typeof warehouse);
                         // Hide keyboard after selling
                         if (document.activeElement instanceof HTMLElement) {
                           document.activeElement.blur();
                         }
                       }}
-                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 font-medium"
+                      className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium text-sm"
                     >
-                      Продати
+                      Продати все ({getProductValue(product as keyof typeof warehouse).toLocaleString()} 💰)
                     </button>
                   </div>
                 </div>
