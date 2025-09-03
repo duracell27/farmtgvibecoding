@@ -52,4 +52,7 @@ export interface GameActions {
   
   // Timer actions
   decrementTimer: () => void;
+  
+  // State management
+  forceStateUpdate: () => void;
 }

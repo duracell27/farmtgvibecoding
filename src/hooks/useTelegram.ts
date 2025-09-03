@@ -66,17 +66,28 @@ export const useTelegram = () => {
                 const result = await response.json();
                 if (result.valid && result.user) {
                   console.log('useTelegram: User data validated:', result.user);
-                  // Update user data in store
+                  
+                  // Get current state to preserve game progress
+                  const currentState = useGameStore.getState();
+                  
+                  // Update user data in store while preserving game progress
                   useGameStore.setState({
                     user: {
-                      ...user,
+                      ...currentState.user,
                       id: result.user.id.toString(),
                       firstName: result.user.first_name,
                       lastName: result.user.last_name || '',
                       username: result.user.username || '',
                       avatarUrl: result.user.photo_url || '',
+                      // Preserve game progress (level, experience, coins)
+                      level: currentState.user.level,
+                      experience: currentState.user.experience,
+                      experienceToNextLevel: currentState.user.experienceToNextLevel,
+                      coins: currentState.user.coins,
                     },
                   });
+                  
+                  console.log('useTelegram: User data updated, game progress preserved');
                 }
               } else {
                 console.warn('useTelegram: Validation failed');
@@ -88,14 +99,23 @@ export const useTelegram = () => {
               const tgUser = tg.initDataUnsafe?.user as TelegramUser;
               if (tgUser) {
                 console.log('useTelegram: Using unsafe user data:', tgUser);
+                
+                // Get current state to preserve game progress
+                const currentState = useGameStore.getState();
+                
                 useGameStore.setState({
                   user: {
-                    ...user,
+                    ...currentState.user,
                     id: tgUser.id.toString(),
                     firstName: tgUser.first_name,
                     lastName: tgUser.last_name || '',
                     username: tgUser.username || '',
                     avatarUrl: tgUser.photo_url || '',
+                    // Preserve game progress (level, experience, coins)
+                    level: currentState.user.level,
+                    experience: currentState.user.experience,
+                    experienceToNextLevel: currentState.user.experienceToNextLevel,
+                    coins: currentState.user.coins,
                   },
                 });
               }

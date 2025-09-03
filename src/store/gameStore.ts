@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { GameState, GameActions, Plant, User, Warehouse } from '@/types/game';
 
 const initialUser: User = {
@@ -25,7 +26,9 @@ const createPlant = (): Plant => ({
   isReady: false,
 });
 
-export const useGameStore = create<GameState & GameActions>((set, get) => ({
+export const useGameStore = create<GameState & GameActions>()(
+  persist(
+    (set, get) => ({
   // Initial state
   user: initialUser,
   currentPlant: createPlant(),
@@ -85,6 +88,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         currentPlant: createPlant(),
         isHarvesting: false,
       });
+
+      // Force state update for Telegram WebApp
+      setTimeout(() => {
+        const state = get();
+        set({ ...state });
+      }, 100);
     }
   },
 
@@ -145,6 +154,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           coins: user.coins + totalCoins,
         },
       });
+
+      // Force state update for Telegram WebApp
+      setTimeout(() => {
+        const state = get();
+        set({ ...state });
+      }, 100);
     }
   },
 
@@ -183,4 +198,27 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       }
     }
   },
-}));
+
+  // Force state update for Telegram WebApp
+  forceStateUpdate: () => {
+    const state = get();
+    console.log('forceStateUpdate: Forcing state update', {
+      user: state.user,
+      warehouse: state.warehouse,
+      currentPlant: state.currentPlant
+    });
+    set({ ...state });
+  },
+    }),
+    {
+      name: 'farm-game-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist essential game data, not UI state
+      partialize: (state) => ({
+        user: state.user,
+        warehouse: state.warehouse,
+        currentPlant: state.currentPlant,
+      }),
+    }
+  )
+);

@@ -2,9 +2,15 @@
 
 import Image from 'next/image';
 import { useGameStore } from '@/store/gameStore';
+import { useEffect } from 'react';
 
 export const Header = () => {
-  const { user } = useGameStore();
+  const { user, forceStateUpdate } = useGameStore();
+
+  // Force state update when component mounts to ensure data is fresh
+  useEffect(() => {
+    forceStateUpdate();
+  }, [forceStateUpdate]);
 
   const getProgressPercentage = () => {
     const currentLevelExp = user.experience % user.experienceToNextLevel;
