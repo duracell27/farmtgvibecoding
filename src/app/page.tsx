@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from '@/components/Header';
-import { Plant } from '@/components/Plant';
+import { Farm } from '@/components/Farm';
 import { Footer } from '@/components/Footer';
 import { Warehouse } from '@/components/Warehouse';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -52,7 +52,7 @@ export default function Home() {
         
         <main className="pb-20">
           {activeTab === 'farm' ? (
-            <Plant />
+            <Farm />
           ) : (
             <Warehouse />
           )}

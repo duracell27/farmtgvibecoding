@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useGameStore } from '@/store/gameStore';
+import Image from 'next/image';
+import { useGameStore, PLANT_DATA } from '@/store/gameStore';
+import { PlantType } from '@/types/game';
 
 export const Warehouse = () => {
   const { warehouse, sellProduct } = useGameStore();
@@ -23,20 +25,12 @@ export const Warehouse = () => {
   };
 
   const getProductInfo = (product: keyof typeof warehouse) => {
-    switch (product) {
-      case 'onion':
-        return {
-          name: 'Цибуля',
-          emoji: '🧅',
-          price: 3,
-        };
-      default:
-        return {
-          name: 'Невідомий продукт',
-          emoji: '❓',
-          price: 0,
-        };
-    }
+    const plantData = PLANT_DATA[product as PlantType];
+    return {
+      name: plantData.name,
+      image: plantData.image,
+      price: plantData.sellPrice,
+    };
   };
 
   return (
@@ -59,7 +53,13 @@ export const Warehouse = () => {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <span className="text-3xl">{productInfo.emoji}</span>
+                      <Image
+                        src={productInfo.image}
+                        alt={productInfo.name}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 object-contain"
+                      />
                       <div>
                         <h3 className="text-lg font-semibold text-gray-800">
                           {productInfo.name}

@@ -1,9 +1,23 @@
+export type PlantType = 'dill' | 'parsley' | 'onion' | 'cucumber' | 'tomato';
+
+export interface PlantData {
+  type: PlantType;
+  name: string;
+  image: string;
+  requiredLevel: number;
+  growTime: number;
+  buyPrice: number;
+  sellPrice: number;
+  experience: number;
+}
+
 export interface Plant {
   id: string;
-  type: 'onion';
+  type: PlantType;
   timeLeft: number;
   totalTime: number;
   isReady: boolean;
+  plantedAt: number;
 }
 
 export interface User {
@@ -19,7 +33,18 @@ export interface User {
 }
 
 export interface Warehouse {
+  dill: number;
+  parsley: number;
   onion: number;
+  cucumber: number;
+  tomato: number;
+}
+
+export interface FarmPlot {
+  id: string;
+  isUnlocked: boolean;
+  plant: Plant | null;
+  unlockPrice: number;
 }
 
 export interface GameState {
@@ -29,13 +54,16 @@ export interface GameState {
   activeTab: 'farm' | 'warehouse';
   isGameRunning: boolean;
   isHarvesting: boolean;
+  farmPlots: FarmPlot[];
+  selectedPlantType: PlantType | null;
 }
 
 export interface GameActions {
   // Plant actions
   createNewPlant: () => void;
-  clickPlant: () => void;
-  harvestPlant: () => void;
+  clickPlant: (plotId: string) => void;
+  harvestPlant: (plotId: string) => void;
+  plantSeed: (plotId: string, plantType: PlantType) => void;
   
   // User actions
   addExperience: (amount: number) => void;
@@ -44,6 +72,10 @@ export interface GameActions {
   
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => void;
+  
+  // Farm actions
+  unlockPlot: (plotId: string) => void;
+  selectPlantType: (plantType: PlantType | null) => void;
   
   // UI actions
   setActiveTab: (tab: 'farm' | 'warehouse') => void;
