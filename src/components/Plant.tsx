@@ -3,7 +3,7 @@
 import { useGameStore } from '@/store/gameStore';
 
 export const Plant = () => {
-  const { currentPlant, clickPlant } = useGameStore();
+  const { currentPlant, clickPlant, isHarvesting } = useGameStore();
 
   if (!currentPlant) {
     return null;
@@ -40,14 +40,16 @@ export const Plant = () => {
       <button
         onClick={handleClick}
         className="text-8xl hover:scale-110 transition-transform duration-200 active:scale-95"
-        disabled={currentPlant.isReady}
+        disabled={currentPlant.isReady || isHarvesting}
       >
         {getPlantEmoji()}
       </button>
       
       {/* Status text */}
       <div className="mt-4 text-lg text-gray-600">
-        {currentPlant.isReady ? (
+        {isHarvesting ? (
+          <span className="text-blue-600 font-semibold">Збираємо урожай...</span>
+        ) : currentPlant.isReady ? (
           <span className="text-green-600 font-semibold">Готово до збору!</span>
         ) : (
           <span>Клікніть для прискорення</span>

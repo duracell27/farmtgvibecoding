@@ -32,6 +32,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   warehouse: initialWarehouse,
   activeTab: 'farm',
   isGameRunning: false,
+  isHarvesting: false,
 
   // Plant actions
   createNewPlant: () => {
@@ -39,8 +40,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   clickPlant: () => {
-    const { currentPlant } = get();
-    if (currentPlant && currentPlant.timeLeft > 0) {
+    const { currentPlant, isHarvesting } = get();
+    if (currentPlant && currentPlant.timeLeft > 0 && !isHarvesting) {
       const newTimeLeft = Math.max(0, currentPlant.timeLeft - 1);
       set({
         currentPlant: {
@@ -53,22 +54,29 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   harvestPlant: () => {
-    const { currentPlant, warehouse, addExperience, addCoins } = get();
-    if (currentPlant && currentPlant.isReady) {
-      // Add to warehouse
+    const { currentPlant, warehouse, user, isHarvesting } = get();
+    if (currentPlant && currentPlant.isReady && !isHarvesting) {
+      // Set harvesting flag to prevent multiple calls
+      set({ isHarvesting: true });
+
+      // Update all state at once to prevent flickering
       set({
         warehouse: {
           ...warehouse,
           onion: warehouse.onion + 1,
         },
+        user: {
+          ...user,
+          experience: user.experience + 10,
+          coins: user.coins + 5,
+        },
       });
 
-      // Add experience and coins
-      addExperience(10);
-      addCoins(5);
-
-      // Create new plant
-      get().createNewPlant();
+      // Create new plant and reset harvesting flag
+      set({ 
+        currentPlant: createPlant(),
+        isHarvesting: false 
+      });
     }
   },
 
@@ -141,8 +149,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
   // Timer actions
   decrementTimer: () => {
-    const { currentPlant, harvestPlant } = get();
-    if (currentPlant && currentPlant.timeLeft > 0) {
+    const { currentPlant, harvestPlant, isHarvesting } = get();
+    if (currentPlant && currentPlant.timeLeft > 0 && !isHarvesting) {
       const newTimeLeft = currentPlant.timeLeft - 1;
       set({
         currentPlant: {
@@ -152,7 +160,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         },
       });
 
-      // Auto harvest when ready
+      // Auto harvest when ready (only once)
       if (newTimeLeft === 0) {
         harvestPlant();
       }

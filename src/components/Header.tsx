@@ -12,7 +12,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-green-600 text-white p-4 shadow-lg pt-16">
+    <header className="bg-green-600 text-white p-4 shadow-lg pt-24">
       <div className="max-w-md mx-auto">
         {/* User info */}
         <div className="flex items-center justify-between mb-3">

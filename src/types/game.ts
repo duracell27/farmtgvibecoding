@@ -28,6 +28,7 @@ export interface GameState {
   warehouse: Warehouse;
   activeTab: 'farm' | 'warehouse';
   isGameRunning: boolean;
+  isHarvesting: boolean;
 }
 
 export interface GameActions {
