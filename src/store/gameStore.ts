@@ -652,8 +652,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     // For testing purposes, allow test user ID '1' to work in development
     const isTestMode = process.env.NODE_ENV === 'development';
     
-    if (!state.user.id || (state.user.id === '1' && !isTestMode)) {
-      console.log('saveGameState: Skipping save - no valid user ID or test user in production');
+    if (!state.user.id) {
+      console.log('saveGameState: Skipping save - no user ID');
+      return;
+    }
+    
+    // In production, only allow real Telegram user IDs (numeric strings)
+    if (!isTestMode && (state.user.id === '1' || isNaN(Number(state.user.id)))) {
+      console.log('saveGameState: Skipping save - invalid user ID for production:', state.user.id);
       return;
     }
 
@@ -689,8 +695,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     // For testing purposes, allow test user ID '1' to work in development
     const isTestMode = process.env.NODE_ENV === 'development';
     
-    if (!user.id || (user.id === '1' && !isTestMode)) {
-      console.log('loadGameState: Skipping load - no valid user ID or test user in production');
+    if (!user.id) {
+      console.log('loadGameState: Skipping load - no user ID');
+      return;
+    }
+    
+    // In production, only allow real Telegram user IDs (numeric strings)
+    if (!isTestMode && (user.id === '1' || isNaN(Number(user.id)))) {
+      console.log('loadGameState: Skipping load - invalid user ID for production:', user.id);
       return;
     }
 
