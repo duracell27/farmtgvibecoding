@@ -33,10 +33,6 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      bufferMaxEntries: 0,
-      // SSL options for Vercel
-      ssl: true,
-      sslValidate: false,
       // Retry options
       retryWrites: true,
       retryReads: true,

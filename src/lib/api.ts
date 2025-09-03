@@ -6,22 +6,16 @@
 export function getApiBaseUrl(): string {
   // In browser environment
   if (typeof window !== 'undefined') {
-    const origin = window.location.origin;
-    console.log('API Base URL (browser):', origin);
-    return origin;
+    return window.location.origin;
   }
   
   // In server environment (SSR)
   if (process.env.VERCEL_URL) {
-    const url = `https://${process.env.VERCEL_URL}`;
-    console.log('API Base URL (server):', url);
-    return url;
+    return `https://${process.env.VERCEL_URL}`;
   }
   
   // Fallback for development
-  const fallback = 'http://localhost:3000';
-  console.log('API Base URL (fallback):', fallback);
-  return fallback;
+  return 'http://localhost:3000';
 }
 
 /**
@@ -30,7 +24,5 @@ export function getApiBaseUrl(): string {
 export function getApiUrl(endpoint: string): string {
   const baseUrl = getApiBaseUrl();
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const fullUrl = `${baseUrl}${cleanEndpoint}`;
-  console.log('API URL:', fullUrl);
-  return fullUrl;
+  return `${baseUrl}${cleanEndpoint}`;
 }

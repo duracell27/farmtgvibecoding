@@ -667,10 +667,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'saving' });
       
-      const apiUrl = getApiUrl('/api/game/save');
-      console.log('saveGameState: Making request to:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(getApiUrl('/api/game/save'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -713,10 +710,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'loading' });
       
-      const apiUrl = getApiUrl(`/api/game/load?userId=${user.id}`);
-      console.log('loadGameState: Making request to:', apiUrl);
-      
-      const response = await fetch(apiUrl);
+      const response = await fetch(getApiUrl(`/api/game/load?userId=${user.id}`));
       
       if (response.ok) {
         const result = await response.json();
@@ -758,10 +752,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     try {
       set({ syncStatus: 'loading' });
       
-      const apiUrl = getApiUrl(`/api/rating?type=${type}&limit=50`);
-      console.log('loadRatingData: Making request to:', apiUrl);
-      
-      const response = await fetch(apiUrl);
+      const response = await fetch(getApiUrl(`/api/rating?type=${type}&limit=50`));
       
       if (response.ok) {
         const result = await response.json();
