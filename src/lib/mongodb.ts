@@ -29,30 +29,35 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
   if (!cached.promise) {
     const options = {
-      // Connection options for Vercel compatibility
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      // Retry options
-      retryWrites: true,
-      retryReads: true,
-      // Connection timeout
-      connectTimeoutMS: 10000,
-      // Heartbeat frequency
-      heartbeatFrequencyMS: 10000,
+      // Minimal options for Vercel compatibility
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 15000,
     };
 
     cached.promise = MongoClient.connect(MONGODB_URI, options).then((client) => {
-      console.log('MongoDB: Connected successfully');
+      console.log('MongoDB: Connected successfully with options');
       return {
         client,
         db: client.db(MONGODB_DB),
       };
     }).catch((error) => {
-      console.error('MongoDB: Connection failed:', error);
+      console.error('MongoDB: Connection with options failed, trying without options:', error);
+      
+      // Try without options as fallback
+      return MongoClient.connect(MONGODB_URI).then((client) => {
+        console.log('MongoDB: Connected successfully without options');
+        return {
+          client,
+          db: client.db(MONGODB_DB),
+        };
+      });
+    }).catch((fallbackError) => {
+      console.error('MongoDB: Both connection attempts failed:', fallbackError);
       // Clear the promise so we can retry
       cached.promise = null;
-      throw error;
+      throw fallbackError;
     });
   }
   cached.conn = await cached.promise;

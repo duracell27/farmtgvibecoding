@@ -24,7 +24,7 @@ export const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0">
       <div className="max-w-md mx-auto">
-        <nav className="flex">
+        <nav className="flex px-2">
           <button
             onClick={() => setActiveTab("farm")}
             className={`flex-1 py-4 pt-0 px-6 text-center transition-colors duration-200 ${

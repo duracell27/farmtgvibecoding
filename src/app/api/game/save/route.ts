@@ -18,12 +18,24 @@ export async function POST(request: NextRequest) {
 
     let db;
     try {
+      console.log('Save API: Attempting database connection...');
       const connection = await connectToDatabase();
       db = connection.db;
+      console.log('Save API: Database connection successful');
     } catch (dbError) {
-      console.error('Save API: Database connection failed:', dbError);
+      console.error('Save API: Database connection failed:', {
+        error: dbError,
+        message: dbError instanceof Error ? dbError.message : 'Unknown error',
+        stack: dbError instanceof Error ? dbError.stack : null,
+        environment: process.env.NODE_ENV,
+        hasMongoUri: !!process.env.MONGODB_URI,
+        hasMongoDb: !!process.env.MONGODB_DB,
+      });
       return NextResponse.json(
-        { error: 'Database connection failed' },
+        { 
+          error: 'Database connection failed',
+          details: process.env.NODE_ENV === 'development' ? dbError : 'Check server logs'
+        },
         { status: 500 }
       );
     }

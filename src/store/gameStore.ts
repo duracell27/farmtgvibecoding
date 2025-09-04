@@ -182,6 +182,18 @@ const generateFarmPlots = (): FarmPlot[] => {
   return plots;
 };
 
+// Helper function to calculate level reward using formula M = 10 × 1.40^(L-1)
+const calculateLevelReward = (level: number): number => {
+  return Math.floor(10 * Math.pow(1.40, level - 1));
+};
+
+// Helper function to get newly unlocked plant type for a level
+const getNewlyUnlockedPlant = (newLevel: number): PlantType | null => {
+  const plantEntries = Object.entries(PLANT_DATA) as [PlantType, PlantData][];
+  const newlyUnlocked = plantEntries.find(([, plantData]) => plantData.requiredLevel === newLevel);
+  return newlyUnlocked ? newlyUnlocked[0] : null;
+};
+
 // Helper function to calculate level progression with new requirements
 const calculateLevelProgression = (currentLevel: number, currentExp: number, expToAdd: number) => {
   let newLevel = currentLevel;
@@ -242,6 +254,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   lastSyncTime: null,
   ratingData: null,
   activeRatingType: 'level',
+  levelUpModal: {
+    isOpen: false,
+    newLevel: 1,
+    newPlantType: null,
+    rewardCoins: 0,
+  },
 
   // Plant actions
   createNewPlant: () => {
@@ -281,7 +299,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, saveGameState } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, saveGameState, showLevelUpModal } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -293,6 +311,18 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       // Calculate new level progression
       const levelProgression = calculateLevelProgression(user.level, user.experience, plantData.experience);
       
+      // Check if user leveled up
+      const leveledUp = levelProgression.level > user.level;
+      let rewardCoins = 0;
+      let newPlantType: PlantType | null = null;
+      
+      if (leveledUp) {
+        // Calculate reward coins using formula M = 10 × 1.40^(L-1)
+        rewardCoins = calculateLevelReward(levelProgression.level);
+        // Get newly unlocked plant
+        newPlantType = getNewlyUnlockedPlant(levelProgression.level);
+      }
+      
       // Update all state at once to prevent flickering
       const newUser = {
         ...user,
@@ -300,7 +330,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         experience: levelProgression.experience,
         experienceToNextLevel: levelProgression.experienceToNextLevel,
         totalHarvests: user.totalHarvests + 1,
-        // No coins for harvesting - only for selling in warehouse
+        coins: user.coins + rewardCoins, // Add reward coins
       };
 
       // Update warehouse - add harvested plant to warehouse
@@ -333,6 +363,13 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         farmPlots: updatedPlots,
         isHarvesting: false,
       });
+      
+      // Show level up modal if user leveled up
+      if (leveledUp) {
+        setTimeout(() => {
+          showLevelUpModal(levelProgression.level, newPlantType, rewardCoins);
+        }, 500); // Small delay to ensure state is updated
+      }
       
       // Update achievements after harvest
       setTimeout(() => get().updateAchievements(), 0);
@@ -777,5 +814,28 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   setActiveRatingType: (type: RatingType) => {
     set({ activeRatingType: type });
+  },
+
+  // Level up modal actions
+  showLevelUpModal: (newLevel: number, newPlantType: PlantType | null, rewardCoins: number) => {
+    set({
+      levelUpModal: {
+        isOpen: true,
+        newLevel,
+        newPlantType,
+        rewardCoins,
+      },
+    });
+  },
+
+  closeLevelUpModal: () => {
+    set({
+      levelUpModal: {
+        isOpen: false,
+        newLevel: 1,
+        newPlantType: null,
+        rewardCoins: 0,
+      },
+    });
   },
 }));

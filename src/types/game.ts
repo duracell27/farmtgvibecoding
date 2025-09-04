@@ -97,6 +97,12 @@ export interface GameState {
   lastSyncTime: number | null;
   ratingData: RatingData | null;
   activeRatingType: RatingType;
+  levelUpModal: {
+    isOpen: boolean;
+    newLevel: number;
+    newPlantType: PlantType | null;
+    rewardCoins: number;
+  };
 }
 
 export interface GameActions {
@@ -138,6 +144,10 @@ export interface GameActions {
   // Rating actions
   loadRatingData: (type: RatingType) => Promise<void>;
   setActiveRatingType: (type: RatingType) => void;
+  
+  // Level up modal actions
+  showLevelUpModal: (newLevel: number, newPlantType: PlantType | null, rewardCoins: number) => void;
+  closeLevelUpModal: () => void;
   
   // State management
   forceStateUpdate: () => void;

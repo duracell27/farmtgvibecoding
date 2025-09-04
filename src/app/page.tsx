@@ -8,13 +8,14 @@ import { Warehouse } from '@/components/Warehouse';
 import { Achievements } from '@/components/Achievements';
 import { Rating } from '@/components/Rating';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LevelUpModal } from '@/components/LevelUpModal';
 import { useGameStore } from '@/store/gameStore';
 import { useTimer } from '@/hooks/useTimer';
 import { useTelegram } from '@/hooks/useTelegram';
 import { useGameSync } from '@/hooks/useGameSync';
 
 export default function Home() {
-  const { activeTab, startGame } = useGameStore();
+  const { activeTab, startGame, levelUpModal, closeLevelUpModal } = useGameStore();
   const { isReady } = useTelegram();
   
   // Start the game timer
@@ -56,7 +57,7 @@ export default function Home() {
       <div className="min-h-screen bg-green-50">
         <Header />
         
-        <main className="pb-20">
+        <main className="pb-20 max-w-sm mx-auto">
           {activeTab === 'farm' ? (
             <Farm />
           ) : activeTab === 'warehouse' ? (
@@ -69,6 +70,15 @@ export default function Home() {
         </main>
         
         <Footer />
+        
+        {/* Level Up Modal */}
+        <LevelUpModal
+          isOpen={levelUpModal.isOpen}
+          onClose={closeLevelUpModal}
+          newLevel={levelUpModal.newLevel}
+          newPlantType={levelUpModal.newPlantType}
+          rewardCoins={levelUpModal.rewardCoins}
+        />
       </div>
     </ErrorBoundary>
   );

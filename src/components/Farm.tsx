@@ -19,6 +19,7 @@ export const Farm = () => {
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clickedPlantId, setClickedPlantId] = useState<string | null>(null);
 
   const handlePlotClick = (plotId: string) => {
     const plot = farmPlots.find(p => p.id === plotId);
@@ -42,6 +43,11 @@ export const Farm = () => {
     if (plot.plant) {
       // Click on existing plant
       console.log('Clicking on existing plant:', plotId);
+      
+      // Add click animation
+      setClickedPlantId(plotId);
+      setTimeout(() => setClickedPlantId(null), 200);
+      
       clickPlant(plotId);
     } else if (selectedPlantType) {
       // Plant selected seed
@@ -57,7 +63,7 @@ export const Farm = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="py-4 px-1 max-w-sm mx-auto">
       {/* Plant Selection Button */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -125,12 +131,7 @@ export const Farm = () => {
             );
           })()}
         </div>
-        <div className="text-xs text-gray-500 mb-2">
-          Загальна кількість грядок: {farmPlots.length} | 
-          Розблоковано: {farmPlots.filter(p => p.isUnlocked).length} | 
-          Заблоковано: {farmPlots.filter(p => !p.isUnlocked).length}
-        </div>
-        <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-2">
+        <div className="grid grid-cols-2 gap-4 border border-gray-200 rounded-lg p-2">
           {farmPlots
             .filter((plot) => {
               // Show unlocked plots and the next locked plot
@@ -157,49 +158,53 @@ export const Farm = () => {
               </div>
               <button
                 onClick={() => handlePlotClick(plot.id)}
-                className={`w-full h-32 rounded-lg border-2 transition-all relative overflow-hidden ${
+                className={`aspect-square w-full rounded-lg border-2 transition-all relative overflow-hidden p-0 ${
                   plot.isUnlocked
                     ? 'border-green-300 hover:border-green-400'
-                    : 'border-gray-400 bg-gray-200'
+                    : 'border-gray-400'
                 }`}
                 disabled={isHarvesting}
               >
-                {/* Soil Background */}
-                <Image
-                  src="/images/soil.png"
-                  alt="Soil"
-                  fill
-                  className={`object-cover ${!plot.isUnlocked ? 'grayscale opacity-50' : ''}`}
-                />
-                
-                {/* Plant */}
-                {plot.plant && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative">
-                      <Image
-                        src={PLANT_DATA[plot.plant.type].image}
-                        alt={PLANT_DATA[plot.plant.type].name}
-                        width={48}
-                        height={48}
-                        className="w-16 h-16 object-contain"
-                      />
-                      
-                      {/* Timer */}
-                      {plot.plant.timeLeft > 0 && (
-                        <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-green-600 border border-green-300">
-                          {plot.plant.timeLeft}
-                        </div>
-                      )}
-                      
-                      {/* Ready indicator */}
-                      {plot.plant.isReady && (
-                        <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-white">
-                          ✓
-                        </div>
-                      )}
+                {/* Soil as the main plot background */}
+                <div className={`w-full h-full relative ${!plot.isUnlocked ? 'grayscale opacity-50' : ''}`}>
+                  <Image
+                    src="/images/soil.png"
+                    alt="Soil"
+                    fill
+                    className="object-contain rounded-lg"
+                  />
+                  
+                  {/* Plant positioned on top of soil */}
+                  {plot.plant && (
+                    <div className="absolute inset-0 flex items-center justify-start pl-5">
+                      <div className={`relative transition-transform ease-in-out ${
+                        clickedPlantId === plot.id ? 'scale-85' : 'scale-100'
+                      }`}>
+                        <Image
+                          src={PLANT_DATA[plot.plant.type].image}
+                          alt={PLANT_DATA[plot.plant.type].name}
+                          width={48}
+                          height={48}
+                          className="w-16 h-16 object-contain"
+                        />
+                        
+                        {/* Timer */}
+                        {plot.plant.timeLeft > 0 && (
+                          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-green-600 border border-green-300">
+                            {plot.plant.timeLeft}
+                          </div>
+                        )}
+                        
+                        {/* Ready indicator */}
+                        {plot.plant.isReady && (
+                          <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-white">
+                            ✓
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
                 
                 {/* Unlock button for locked plots */}
                 {!plot.isUnlocked && (
