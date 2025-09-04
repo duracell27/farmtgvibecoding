@@ -24,10 +24,10 @@ export const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0">
       <div className="max-w-sm mx-auto">
-        <nav className="flex px-2">
+        <nav className="flex">
           <button
             onClick={() => setActiveTab("farm")}
-            className={`flex-1 py-4 pt-0 px-6 text-center transition-colors duration-200 ${
+            className={`flex-1 py-4 pt-0 text-center transition-colors duration-200 ${
               activeTab === "farm"
                 ? "bg-green-100 text-green-600 border-b-2 border-green-600"
                 : "text-gray-600 hover:bg-gray-50"
@@ -41,7 +41,7 @@ export const Footer = () => {
 
           <button
             onClick={() => setActiveTab("warehouse")}
-            className={`flex-1 py-4  pt-0 px-6 text-center transition-colors duration-200 ${
+            className={`flex-1 py-4 pt-0 text-center transition-colors duration-200 ${
               activeTab === "warehouse"
                 ? "bg-green-100 text-green-600 border-b-2 border-green-600"
                 : "text-gray-600 hover:bg-gray-50"
@@ -55,7 +55,7 @@ export const Footer = () => {
 
           <button
             onClick={() => setActiveTab("achievements")}
-            className={`flex-1 py-4  pt-0 px-6 text-center transition-colors duration-200 relative ${
+            className={`flex-1 py-4 pt-0 text-center transition-colors duration-200 relative ${
               activeTab === "achievements"
                 ? "bg-green-100 text-green-600 border-b-2 border-green-600"
                 : "text-gray-600 hover:bg-gray-50"
@@ -76,7 +76,7 @@ export const Footer = () => {
 
           <button
             onClick={() => setActiveTab("rating")}
-            className={`flex-1 py-4  pt-0 px-6 text-center transition-colors duration-200 ${
+            className={`flex-1 py-4 pt-0 text-center transition-colors duration-200 ${
               activeTab === "rating"
                 ? "bg-green-100 text-green-600 border-b-2 border-green-600"
                 : "text-gray-600 hover:bg-gray-50"

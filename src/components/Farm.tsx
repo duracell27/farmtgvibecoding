@@ -121,7 +121,7 @@ export const Farm = () => {
             return <div className="text-sm text-green-600">Всі 7 грядок розблоковані! 🎉</div>;
           })()}
         </div>
-        <div className="grid grid-cols-2 gap-4 border border-gray-200 rounded-lg p-2">
+        <div className="grid grid-cols-2 gap-4 rounded-lg p-2">
           {farmPlots
             .filter((plot) => {
               // Show unlocked plots and the next locked plot
@@ -145,8 +145,8 @@ export const Farm = () => {
                 </div>
                 <button
                   onClick={() => handlePlotClick(plot.id)}
-                  className={`aspect-square w-full rounded-lg border-2 transition-all relative overflow-hidden p-0 ${
-                    plot.isUnlocked ? "border-green-300 hover:border-green-400" : "border-gray-400"
+                  className={`aspect-square w-full rounded-lg transition-all relative overflow-hidden p-0 ${
+                    plot.isUnlocked ? "" : "border-2 border-gray-400"
                   }`}
                   disabled={isHarvesting}
                 >
