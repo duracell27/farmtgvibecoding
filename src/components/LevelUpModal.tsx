@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useGameStore, PLANT_DATA } from '@/store/gameStore';
+import { PLANT_DATA } from '@/store/gameStore';
 import { PlantType } from '@/types/game';
 
 interface LevelUpModalProps {

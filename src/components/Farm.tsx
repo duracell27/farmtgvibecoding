@@ -1,48 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useGameStore, PLANT_DATA } from "@/store/gameStore";
-import { PlantType } from "@/types/game";
+import { useGameStore, PLANT_DATA, FERTILIZER_DATA } from "@/store/gameStore";
+import { PlantType, FertilizerType } from "@/types/game";
 import { PlantSelectionModal } from "./PlantSelectionModal";
+import { FertilizerModal } from "./FertilizerModal";
 
 export const Farm = () => {
   const {
     farmPlots,
     user,
     selectedPlantType,
+    selectedFertilizerType,
     clickPlant,
     plantSeed,
     unlockPlot,
     selectPlantType,
+    selectFertilizerType,
+    applyFertilizer,
     isHarvesting,
+    waterPlant,
+    clearPlot,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFertilizerModalOpen, setIsFertilizerModalOpen] = useState(false);
   const [clickedPlantId, setClickedPlantId] = useState<string | null>(null);
+  const [, setCooldownUpdate] = useState(0);
+  const [clearConfirmPlotId, setClearConfirmPlotId] = useState<string | null>(null);
+
+  // Update cooldown display every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCooldownUpdate((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handlePlotClick = (plotId: string) => {
     const plot = farmPlots.find((p) => p.id === plotId);
 
-    console.log("handlePlotClick:", {
-      plotId,
-      plot: plot ? { id: plot.id, isUnlocked: plot.isUnlocked, hasPlant: !!plot.plant } : null,
-      selectedPlantType,
-      userCoins: user.coins,
-    });
 
     if (!plot) return;
 
     if (!plot.isUnlocked) {
       // Try to unlock the plot
-      console.log("Trying to unlock plot:", plotId);
       unlockPlot(plotId);
       return;
     }
 
     if (plot.plant) {
       // Click on existing plant
-      console.log("Clicking on existing plant:", plotId);
 
       // Add click animation
       setClickedPlantId(plotId);
@@ -51,10 +61,8 @@ export const Farm = () => {
       clickPlant(plotId);
     } else if (selectedPlantType) {
       // Plant selected seed
-      console.log("Planting seed:", { plotId, plantType: selectedPlantType });
       plantSeed(plotId, selectedPlantType);
     } else {
-      console.log("No plant selected for planting");
     }
   };
 
@@ -62,43 +70,166 @@ export const Farm = () => {
     selectPlantType(plantType);
   };
 
+  const handleFertilizerSelect = (fertilizerType: FertilizerType) => {
+    selectFertilizerType(fertilizerType);
+  };
+
+  const handleWaterPlant = (plotId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent plot click
+    waterPlant(plotId);
+  };
+
+  const handleApplyFertilizer = (plotId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent plot click
+    if (selectedFertilizerType) {
+      applyFertilizer(plotId, selectedFertilizerType);
+    }
+  };
+
+  const handleClearPlot = (plotId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent plot click
+    setClearConfirmPlotId(plotId);
+  };
+
+  const confirmClearPlot = () => {
+    if (clearConfirmPlotId) {
+      clearPlot(clearConfirmPlotId);
+      setClearConfirmPlotId(null);
+    }
+  };
+
+  const cancelClearPlot = () => {
+    setClearConfirmPlotId(null);
+  };
+
+  const getWateringCooldown = (plant: { isReady: boolean; lastWateredAt: number } | null) => {
+    if (!plant || plant.isReady) return 0;
+    const now = Date.now();
+    const cooldown = 15000; // 15 seconds
+    const timeSinceLastWater = now - plant.lastWateredAt;
+    return Math.max(0, cooldown - timeSinceLastWater);
+  };
+
+  const getFertilizerCooldown = (
+    plant: {
+      isReady: boolean;
+      plantedAt: number;
+      lastFertilizedAt?: number;
+      fertilizerApplied?: FertilizerType;
+    } | null
+  ) => {
+    if (!plant || plant.isReady || plant.fertilizerApplied) return 0;
+
+    const now = Date.now();
+    const FERTILIZER_DELAY = 120000; // 2 minutes after planting
+
+    // Check if 2 minutes have passed since planting
+    const timeSincePlanting = now - plant.plantedAt;
+    if (timeSincePlanting < FERTILIZER_DELAY) {
+      return FERTILIZER_DELAY - timeSincePlanting;
+    }
+
+    return 0; // Can use fertilizer
+  };
+
+  const formatCooldownTime = (ms: number) => {
+    return Math.ceil(ms / 1000);
+  };
+
+  const getCooldownProgress = (plant: { isReady: boolean; lastWateredAt: number } | null) => {
+    if (!plant || plant.isReady) return 100; // No cooldown, fully available
+    const cooldown = getWateringCooldown(plant);
+    const totalCooldown = 15000; // 15 seconds
+    return ((totalCooldown - cooldown) / totalCooldown) * 100; // Percentage of cooldown completed
+  };
+
+  const getFertilizerCooldownProgress = (
+    plant: {
+      isReady: boolean;
+      plantedAt: number;
+      lastFertilizedAt?: number;
+      fertilizerApplied?: FertilizerType;
+    } | null
+  ) => {
+    if (!plant || plant.isReady || plant.fertilizerApplied) return 100; // No cooldown, fully available
+    const cooldown = getFertilizerCooldown(plant);
+    const totalCooldown = 120000; // 2 minutes
+    return ((totalCooldown - cooldown) / totalCooldown) * 100; // Percentage of cooldown completed
+  };
+
   return (
     <div className="py-4 px-1 max-w-sm mx-auto">
-      {/* Plant Selection Button */}
+      {/* Plant Selection and Fertilizer Buttons */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Ферма</h3>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
-          >
-            {selectedPlantType ? (
-              <>
-                <Image
-                  src={PLANT_DATA[selectedPlantType].image}
-                  alt={PLANT_DATA[selectedPlantType].name}
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 object-contain"
-                />
-                <span>{PLANT_DATA[selectedPlantType].name}</span>
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectPlantType(null);
-                  }}
-                  className="text-green-200 hover:text-white ml-1 cursor-pointer"
-                >
-                  ✕
-                </span>
-              </>
-            ) : (
-              <>
-                <span>🌱</span>
-                <span>Виберіть рослину</span>
-              </>
-            )}
-          </button>
+        <div className="flex items-center justify-evenly mb-4">
+          
+          <div className="flex space-x-2">
+            {/* Plant Selection Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+            >
+              {selectedPlantType ? (
+                <>
+                  <Image
+                    src={PLANT_DATA[selectedPlantType].image}
+                    alt={PLANT_DATA[selectedPlantType].name}
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span>{PLANT_DATA[selectedPlantType].name}</span>
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      selectPlantType(null);
+                    }}
+                    className="text-green-200 hover:text-white ml-1 cursor-pointer"
+                  >
+                    ✕
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>🌱</span>
+                  <span>Рослина</span>
+                </>
+              )}
+            </button>
+
+            {/* Fertilizer Selection Button */}
+            <button
+              onClick={() => setIsFertilizerModalOpen(true)}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2 relative"
+            >
+              {selectedFertilizerType ? (
+                <>
+                  <Image
+                    src={FERTILIZER_DATA[selectedFertilizerType].image}
+                    alt={FERTILIZER_DATA[selectedFertilizerType].name}
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span>{FERTILIZER_DATA[selectedFertilizerType].name}</span>
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      selectFertilizerType(null);
+                    }}
+                    className="text-orange-200 hover:text-white ml-1 cursor-pointer"
+                  >
+                    ✕
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>🌿</span>
+                  <span>Добриво</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -112,8 +243,6 @@ export const Farm = () => {
             const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
             const nextPlot = lockedPlots[0]; // First locked plot
 
-            console.log("Debug - lockedPlots:", lockedPlots);
-            console.log("Debug - nextPlot:", nextPlot);
 
             if (nextPlot) {
               return <div className="text-sm text-gray-600">Наступна: 💰 {nextPlot.unlockPrice}</div>;
@@ -139,10 +268,12 @@ export const Farm = () => {
                 <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
                   {index + 1}
                 </div>
-                {/* Plot status for debugging */}
-                <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
-                  {plot.isUnlocked ? "✓" : "🔒"}
-                </div>
+                {/* Plot status - only show lock for locked plots */}
+                {!plot.isUnlocked && (
+                  <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
+                    🔒
+                  </div>
+                )}
                 <button
                   onClick={() => handlePlotClick(plot.id)}
                   className={`aspect-square w-full rounded-lg transition-all relative overflow-hidden p-0 ${
@@ -186,6 +317,136 @@ export const Farm = () => {
                         </div>
                       </div>
                     )}
+
+                    {/* Clear plot button */}
+                    {plot.plant && (
+                      <div className="absolute -top-1 -right-1">
+                        <button
+                          onClick={(e) => handleClearPlot(plot.id, e)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all duration-200 bg-red-500/70 text-white hover:bg-red-600 active:scale-95"
+                          title="Очистити грядку"
+                        >
+                          <span className="text-xs">🧹</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Watering and Fertilizer buttons */}
+                    {plot.plant && !plot.plant.isReady && (
+                      <div className="absolute bottom-8 right-2 flex flex-col space-y-7">
+                        {/* Fertilizer button */}
+                        {selectedFertilizerType && (
+                          <div className="relative">
+                            {(() => {
+                              const cooldown = getFertilizerCooldown(plot.plant);
+                              const isOnCooldown = cooldown > 0;
+                              const cooldownSeconds = formatCooldownTime(cooldown);
+                              const cooldownProgress = getFertilizerCooldownProgress(plot.plant);
+                              const hasInsufficientFunds =
+                                user.coins < FERTILIZER_DATA[selectedFertilizerType].price;
+                              const isFertilizerApplied = !!plot.plant.fertilizerApplied;
+
+                              return (
+                                <>
+                                  <button
+                                    onClick={(e) => handleApplyFertilizer(plot.id, e)}
+                                    disabled={hasInsufficientFunds || isOnCooldown || isFertilizerApplied}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm transition-all duration-200 relative overflow-hidden ${
+                                      hasInsufficientFunds || isOnCooldown || isFertilizerApplied
+                                        ? "bg-orange-400 text-gray-500 cursor-not-allowed"
+                                        : "bg-orange-500 text-white hover:bg-orange-600 active:scale-95"
+                                    }`}
+                                    title={
+                                      isFertilizerApplied
+                                        ? "Добриво вже застосовано"
+                                        : hasInsufficientFunds
+                                        ? `Недостатньо коштів! Потрібно: ${
+                                            FERTILIZER_DATA[selectedFertilizerType].price
+                                          } 💰 (не вистачає: ${
+                                            FERTILIZER_DATA[selectedFertilizerType].price - user.coins
+                                          } 💰)`
+                                        : isOnCooldown
+                                        ? `Добриво можна застосувати через ${cooldownSeconds}с після посадки`
+                                        : `Застосувати ${FERTILIZER_DATA[selectedFertilizerType].name}`
+                                    }
+                                  >
+                                    {isFertilizerApplied ? (
+                                      <span className="text-green-600 text-lg font-bold">✓</span>
+                                    ) : (
+                                      <Image
+                                        src={FERTILIZER_DATA[selectedFertilizerType].image}
+                                        alt={FERTILIZER_DATA[selectedFertilizerType].name}
+                                        width={20}
+                                        height={20}
+                                        className="w-6 h-6 object-contain absolute z-10"
+                                      />
+                                    )}
+
+                                    {/* Cooldown overlay - semi-transparent filter that moves from top to bottom */}
+                                    {isOnCooldown && !isFertilizerApplied && (
+                                      <div
+                                        className="absolute inset-0 bg-white opacity-95 transition-all duration-100"
+                                        style={{
+                                          clipPath: `polygon(0 0, 100% 0, 100% ${
+                                            100 - cooldownProgress
+                                          }%, 0 ${100 - cooldownProgress}%)`,
+                                        }}
+                                      />
+                                    )}
+                                  </button>
+
+                                  {/* Red coin indicator when insufficient funds - outside button to avoid overflow hidden */}
+                                  {hasInsufficientFunds && !isFertilizerApplied && (
+                                    <div className="absolute -top-2 -right-2 bg-red-500 rounded-full px-1 py-0.5 flex items-center justify-center min-w-[2rem] z-20">
+                                      <span className="text-white text-xs font-bold">
+                                        💰 {FERTILIZER_DATA[selectedFertilizerType].price}
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Watering button */}
+                        {(() => {
+                          const cooldown = getWateringCooldown(plot.plant);
+                          const isOnCooldown = cooldown > 0;
+                          const cooldownSeconds = formatCooldownTime(cooldown);
+                          const cooldownProgress = getCooldownProgress(plot.plant);
+
+                          return (
+                            <div className="relative">
+                              <button
+                                onClick={(e) => handleWaterPlant(plot.id, e)}
+                                disabled={isOnCooldown}
+                                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm transition-all duration-200 relative overflow-hidden ${
+                                  isOnCooldown
+                                    ? "bg-blue-400 text-gray-500 cursor-not-allowed"
+                                    : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+                                }`}
+                                title={isOnCooldown ? `Кулдаун: ${cooldownSeconds}с` : "Полити рослину"}
+                              >
+                                <span className="text-xl absolute z-10">💧</span>
+
+                                {/* Cooldown overlay - semi-transparent filter that moves from top to bottom */}
+                                {isOnCooldown && (
+                                  <div
+                                    className="absolute inset-0 bg-white opacity-95 transition-all duration-100"
+                                    style={{
+                                      clipPath: `polygon(0 0, 100% 0, 100% ${100 - cooldownProgress}%, 0 ${
+                                        100 - cooldownProgress
+                                      }%)`,
+                                    }}
+                                  />
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   {/* Unlock button for locked plots */}
@@ -220,7 +481,12 @@ export const Farm = () => {
                         <div className="text-white flex flex-col items-center justify-center text-sm font-medium">
                           Садити {PLANT_DATA[selectedPlantType].name} 💰{" "}
                           {PLANT_DATA[selectedPlantType].buyPrice}
-                          <Image src={PLANT_DATA[selectedPlantType].image} alt="Coin" width={50} height={50} />
+                          <Image
+                            src={PLANT_DATA[selectedPlantType].image}
+                            alt="Coin"
+                            width={50}
+                            height={50}
+                          />
                         </div>
                       </div>
                     )}
@@ -248,9 +514,17 @@ export const Farm = () => {
       <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
         <p className="font-medium mb-1">Як грати:</p>
         <ul className="space-y-1 text-xs">
-          <li>• Натисніть &quot;Виберіть рослину&quot; для відкриття списку</li>
+          <li>• Натисніть &quot;Рослина&quot; для вибору насіння</li>
+          <li>• Натисніть &quot;Добриво&quot; для вибору добрива</li>
           <li>• Натисніть на вільну грядку для посадки</li>
           <li>• Клікайте на рослину для прискорення росту</li>
+          <li>• Натисніть 💧 для поливу (зменшує час на 15с, кулдаун 15с)</li>
+          <li>• Натисніть на іконку добрива для застосування</li>
+          <li>• Добриво можна застосувати тільки через 2 хв після посадки</li>
+          <li>• Добриво можна застосувати тільки один раз на рослину</li>
+          <li>• 💰 50 показує ціну добрива при недостатності коштів (тільки на грядках)</li>
+          <li>• Білий фільтр показує час до можливості застосування добрива</li>
+          <li>• Натисніть 🧹 для очищення грядки від рослини</li>
           <li>• Збирайте урожай коли рослина готова</li>
           <li>• Розблокуйте нові грядки за монети</li>
         </ul>
@@ -263,6 +537,43 @@ export const Farm = () => {
         onSelect={handlePlantSelect}
         selectedPlantType={selectedPlantType}
       />
+
+      {/* Fertilizer Selection Modal */}
+      <FertilizerModal
+        isOpen={isFertilizerModalOpen}
+        onClose={() => setIsFertilizerModalOpen(false)}
+        onSelect={handleFertilizerSelect}
+        selectedFertilizerType={selectedFertilizerType}
+      />
+
+      {/* Clear Plot Confirmation Modal */}
+      {clearConfirmPlotId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🧹</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Очистити грядку?</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Ви впевнені, що хочете очистити цю грядку? Рослина буде втрачена безповоротно.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelClearPlot}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={confirmClearPlot}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+                >
+                  Очистити
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

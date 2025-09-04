@@ -1,6 +1,8 @@
 export type PlantType = 'dill' | 'parsley' | 'onion' | 'cucumber' | 'tomato';
 
-export type AchievementType = 'clicks' | 'harvests' | 'plots';
+export type FertilizerType = 'humus' | 'azofoska' | 'pidsilivach' | 'katalizator';
+
+export type AchievementType = 'clicks' | 'harvests' | 'plots' | 'waterings' | 'fertilizers';
 
 export interface AchievementLevel {
   level: number;
@@ -31,6 +33,17 @@ export interface PlantData {
   experience: number;
 }
 
+export interface FertilizerData {
+  type: FertilizerType;
+  name: string;
+  image: string;
+  requiredLevel: number;
+  timeReduction: number; // in minutes
+  price: number;
+  experience: number; // experience gained when using fertilizer
+  description: string;
+}
+
 export interface Plant {
   id: string;
   type: PlantType;
@@ -38,6 +51,9 @@ export interface Plant {
   totalTime: number;
   isReady: boolean;
   plantedAt: number;
+  lastWateredAt: number;
+  fertilizerApplied?: FertilizerType; // Track if fertilizer was applied
+  lastFertilizedAt?: number; // Track when fertilizer was last applied
 }
 
 export interface User {
@@ -52,6 +68,8 @@ export interface User {
   coins: number;
   totalClicks: number;
   totalHarvests: number;
+  totalWaterings: number;
+  totalFertilizers: number;
 }
 
 export type RatingType = 'level' | 'harvests' | 'clicks';
@@ -92,6 +110,7 @@ export interface GameState {
   isHarvesting: boolean;
   farmPlots: FarmPlot[];
   selectedPlantType: PlantType | null;
+  selectedFertilizerType: FertilizerType | null;
   achievements: Achievement[];
   syncStatus: 'idle' | 'saving' | 'loading' | 'error';
   lastSyncTime: number | null;
@@ -111,6 +130,8 @@ export interface GameActions {
   clickPlant: (plotId: string) => void;
   harvestPlant: (plotId: string) => void;
   plantSeed: (plotId: string, plantType: PlantType) => void;
+  waterPlant: (plotId: string) => void;
+  clearPlot: (plotId: string) => void;
   
   // User actions
   addExperience: (amount: number) => void;
@@ -123,6 +144,8 @@ export interface GameActions {
   // Farm actions
   unlockPlot: (plotId: string) => void;
   selectPlantType: (plantType: PlantType | null) => void;
+  selectFertilizerType: (fertilizerType: FertilizerType | null) => void;
+  applyFertilizer: (plotId: string, fertilizerType: FertilizerType) => void;
   
   // UI actions
   setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements' | 'rating') => void;

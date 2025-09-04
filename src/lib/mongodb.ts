@@ -37,7 +37,6 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
     };
 
     cached.promise = MongoClient.connect(MONGODB_URI, options).then((client) => {
-      console.log('MongoDB: Connected successfully with options');
       return {
         client,
         db: client.db(MONGODB_DB),
@@ -47,7 +46,6 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       
       // Try without options as fallback
       return MongoClient.connect(MONGODB_URI).then((client) => {
-        console.log('MongoDB: Connected successfully without options');
         return {
           client,
           db: client.db(MONGODB_DB),
@@ -69,7 +67,6 @@ export async function testConnection(): Promise<boolean> {
   try {
     const { db } = await connectToDatabase();
     await db.admin().ping();
-    console.log('MongoDB: Connection test successful');
     return true;
   } catch (error) {
     console.error('MongoDB: Connection test failed:', error);

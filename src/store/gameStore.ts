@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType, RatingType } from '@/types/game';
+import { GameState, GameActions, Plant, User, Warehouse, PlantData, PlantType, FarmPlot, Achievement, AchievementType, RatingType, FertilizerType, FertilizerData } from '@/types/game';
 import { getApiUrl } from '@/lib/api';
 
 const initialUser: User = {
@@ -14,6 +14,52 @@ const initialUser: User = {
   coins: 10, // Start with 10 coins
   totalClicks: 0,
   totalHarvests: 0,
+  totalWaterings: 0,
+  totalFertilizers: 0,
+};
+
+// Fertilizer data configuration
+export const FERTILIZER_DATA: Record<FertilizerType, FertilizerData> = {
+  humus: {
+    type: 'humus',
+    name: 'Гум\'юс',
+    image: '/images/fertilizer/gumus.png',
+    requiredLevel: 1,
+    timeReduction: 15, // 15 minutes
+    price: 50,
+    experience: 15,
+    description: 'Базове органічне добриво, що ідеально підходить для прискорення росту ранніх культур.',
+  },
+  azofoska: {
+    type: 'azofoska',
+    name: 'Азофоска',
+    image: '/images/fertilizer/azofoska.png',
+    requiredLevel: 10,
+    timeReduction: 45, // 45 minutes
+    price: 200,
+    experience: 50,
+    description: 'Комплексне добриво, що значно прискорює ріст рослин на середніх етапах гри.',
+  },
+  pidsilivach: {
+    type: 'pidsilivach',
+    name: 'Підсилювач',
+    image: '/images/fertilizer/pidsilivach.png',
+    requiredLevel: 15,
+    timeReduction: 180, // 3 hours
+    price: 800,
+    experience: 500,
+    description: 'Потужна суміш для швидкого отримання врожаю від довгозростаючих культур.',
+  },
+  katalizator: {
+    type: 'katalizator',
+    name: 'Каталізатор',
+    image: '/images/fertilizer/katalizator.png',
+    requiredLevel: 20,
+    timeReduction: 420, // 7 hours
+    price: 2000,
+    experience: 1000,
+    description: 'Екстремально ефективний комплекс, який дозволяє отримати фінальний врожай майже миттєво.',
+  },
 };
 
 // Plant data configuration
@@ -135,6 +181,42 @@ export const ACHIEVEMENT_DATA: Record<AchievementType, Achievement> = {
     currentProgress: 0,
     claimedLevels: [],
   },
+  waterings: {
+    type: 'waterings',
+    name: 'Поливальник',
+    description: 'Кількість поливів',
+    icon: '💧',
+    levels: [
+      { level: 1, requirement: 10, reward: 10, description: '10 поливів' },
+      { level: 2, requirement: 50, reward: 25, description: '50 поливів' },
+      { level: 3, requirement: 100, reward: 50, description: '100 поливів' },
+      { level: 4, requirement: 1000, reward: 300, description: '1,000 поливів' },
+      { level: 5, requirement: 5000, reward: 1000, description: '5,000 поливів' },
+      { level: 6, requirement: 10000, reward: 2500, description: '10,000 поливів' },
+      { level: 7, requirement: 100000, reward: 12500, description: '100,000 поливів' },
+    ],
+    currentLevel: 0,
+    currentProgress: 0,
+    claimedLevels: [],
+  },
+  fertilizers: {
+    type: 'fertilizers',
+    name: 'Агроном',
+    description: 'Кількість використаних добрив',
+    icon: '🌿',
+    levels: [
+      { level: 1, requirement: 5, reward: 25, description: '5 добрив' },
+      { level: 2, requirement: 25, reward: 100, description: '25 добрив' },
+      { level: 3, requirement: 50, reward: 250, description: '50 добрив' },
+      { level: 4, requirement: 100, reward: 500, description: '100 добрив' },
+      { level: 5, requirement: 250, reward: 1000, description: '250 добрив' },
+      { level: 6, requirement: 500, reward: 2500, description: '500 добрив' },
+      { level: 7, requirement: 1000, reward: 5000, description: '1,000 добрив' },
+    ],
+    currentLevel: 0,
+    currentProgress: 0,
+    claimedLevels: [],
+  },
 };
 
 const initialWarehouse: Warehouse = {
@@ -147,13 +229,15 @@ const initialWarehouse: Warehouse = {
 
 const createPlant = (type: PlantType = 'dill'): Plant => {
   const plantData = PLANT_DATA[type];
+  const now = Date.now();
   return {
-    id: Date.now().toString(),
+    id: now.toString(),
     type,
     timeLeft: plantData.growTime,
     totalTime: plantData.growTime,
     isReady: false,
-    plantedAt: Date.now(),
+    plantedAt: now,
+    lastWateredAt: now, // Start cooldown immediately after planting
   };
 };
 
@@ -206,22 +290,9 @@ const calculateLevelProgression = (currentLevel: number, currentExp: number, exp
   
   let newExpToNextLevel = getExpForNextLevel(newLevel);
   
-  console.log('calculateLevelProgression: Starting calculation', {
-    currentLevel,
-    currentExp,
-    expToAdd,
-    newExp,
-    newExpToNextLevel
-  });
   
   // Check if we need to level up
   while (newExp >= newExpToNextLevel) {
-    console.log('calculateLevelProgression: Leveling up!', {
-      oldLevel: newLevel,
-      newLevel: newLevel + 1,
-      expBefore: newExp,
-      expAfter: newExp - newExpToNextLevel
-    });
     
     newExp -= newExpToNextLevel; // Subtract the experience needed for current level
     newLevel += 1;
@@ -234,7 +305,6 @@ const calculateLevelProgression = (currentLevel: number, currentExp: number, exp
     experienceToNextLevel: newExpToNextLevel,
   };
   
-  console.log('calculateLevelProgression: Final result', result);
   
   return result;
 };
@@ -249,6 +319,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   isHarvesting: false,
   farmPlots: generateFarmPlots(),
   selectedPlantType: null,
+  selectedFertilizerType: null,
   achievements: Object.values(ACHIEVEMENT_DATA),
   syncStatus: 'idle',
   lastSyncTime: null,
@@ -387,21 +458,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const plot = farmPlots.find(p => p.id === plotId);
     const plantData = PLANT_DATA[plantType];
     
-    console.log('plantSeed called:', {
-      plotId,
-      plantType,
-      plot: plot ? { id: plot.id, isUnlocked: plot.isUnlocked, hasPlant: !!plot.plant } : null,
-      userCoins: user.coins,
-      plantPrice: plantData.buyPrice,
-      canAfford: user.coins >= plantData.buyPrice
-    });
     
     if (plot && plot.isUnlocked && !plot.plant && user.coins >= plantData.buyPrice) {
-      console.log('Planting seed - deducting coins:', {
-        before: user.coins,
-        price: plantData.buyPrice,
-        after: user.coins - plantData.buyPrice
-      });
       
       const newPlant = createPlant(plantType);
       
@@ -425,12 +483,93 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         set({ ...state });
       }, 100);
     } else {
-      console.log('Cannot plant seed - conditions not met:', {
-        plotExists: !!plot,
-        plotUnlocked: plot?.isUnlocked,
-        plotEmpty: !plot?.plant,
-        hasEnoughCoins: user.coins >= plantData.buyPrice
-      });
+    }
+  },
+
+  waterPlant: (plotId: string) => {
+    const { farmPlots, user, addExperience, harvestPlant } = get();
+    const plot = farmPlots.find(p => p.id === plotId);
+    
+    if (!plot || !plot.plant || plot.plant.isReady) return;
+    
+    const now = Date.now();
+    const WATERING_COOLDOWN = 15000; // 15 seconds in milliseconds
+    const WATERING_EXPERIENCE = 10;
+    const WATERING_TIME_REDUCTION = 15; // seconds
+    
+    // Check if enough time has passed since last watering
+    if (now - plot.plant.lastWateredAt < WATERING_COOLDOWN) {
+      return; // Still in cooldown
+    }
+    
+    // Reduce plant time by 15 seconds (but not below 0)
+    const newTimeLeft = Math.max(0, plot.plant.timeLeft - WATERING_TIME_REDUCTION);
+    
+    // Update plant with new time and last watered timestamp
+    const updatedPlant = {
+      ...plot.plant,
+      timeLeft: newTimeLeft,
+      isReady: newTimeLeft === 0,
+      lastWateredAt: now,
+    };
+    
+    // Update farm plots
+    const updatedPlots = farmPlots.map(p => 
+      p.id === plotId 
+        ? { ...p, plant: updatedPlant }
+        : p
+    );
+    
+    // Add experience and increment watering count
+    const newUser = {
+      ...user,
+      totalWaterings: user.totalWaterings + 1,
+    };
+    
+    set({
+      farmPlots: updatedPlots,
+      user: newUser,
+    });
+    
+    // Add experience
+    addExperience(WATERING_EXPERIENCE);
+    
+    // If plant is ready after watering, harvest it immediately
+    if (newTimeLeft === 0) {
+      setTimeout(() => {
+        harvestPlant(plotId);
+      }, 100); // Small delay to ensure state is updated
+    }
+    
+    // Update achievements
+    setTimeout(() => get().updateAchievements(), 0);
+    
+    // Force state update for Telegram WebApp
+    setTimeout(() => {
+      const state = get();
+      set({ ...state });
+    }, 100);
+  },
+
+  clearPlot: (plotId: string) => {
+    const { farmPlots } = get();
+    const plot = farmPlots.find(p => p.id === plotId);
+    
+    if (plot && plot.plant) {
+      // Clear the plant from the plot
+      const updatedPlots = farmPlots.map(p => 
+        p.id === plotId 
+          ? { ...p, plant: null }
+          : p
+      );
+      
+      set({ farmPlots: updatedPlots });
+      
+      // Force state update for Telegram WebApp
+      setTimeout(() => {
+        const state = get();
+        set({ ...state });
+      }, 100);
     }
   },
 
@@ -536,6 +675,78 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     set({ selectedPlantType: plantType });
   },
 
+  selectFertilizerType: (fertilizerType: FertilizerType | null) => {
+    set({ selectedFertilizerType: fertilizerType });
+    
+    // Auto-save when fertilizer type changes
+    setTimeout(() => {
+      get().saveGameState();
+    }, 100);
+  },
+
+  applyFertilizer: (plotId: string, fertilizerType: FertilizerType) => {
+    const { farmPlots, user, addExperience } = get();
+    const plot = farmPlots.find(p => p.id === plotId);
+    const fertilizerData = FERTILIZER_DATA[fertilizerType];
+    
+    if (plot && plot.plant && !plot.plant.isReady && !plot.plant.fertilizerApplied && user.coins >= fertilizerData.price) {
+      const now = Date.now();
+      const FERTILIZER_DELAY = 120000; // 2 minutes after planting
+      
+      // Check if 2 minutes have passed since planting
+      const timeSincePlanting = now - plot.plant.plantedAt;
+      if (timeSincePlanting < FERTILIZER_DELAY) {
+        return; // Cannot use fertilizer yet
+      }
+      
+      // Convert minutes to seconds for time reduction
+      const timeReductionSeconds = fertilizerData.timeReduction * 60;
+      const newTimeLeft = Math.max(0, plot.plant.timeLeft - timeReductionSeconds);
+      
+      const updatedPlant = {
+        ...plot.plant,
+        timeLeft: newTimeLeft,
+        isReady: newTimeLeft === 0,
+        fertilizerApplied: fertilizerType,
+        lastFertilizedAt: now,
+      };
+      
+      const updatedPlots = farmPlots.map(p => 
+        p.id === plotId 
+          ? { ...p, plant: updatedPlant }
+          : p
+      );
+      
+      set({
+        farmPlots: updatedPlots,
+        user: {
+          ...user,
+          coins: user.coins - fertilizerData.price,
+          totalFertilizers: user.totalFertilizers + 1,
+        },
+      });
+      
+      // Add experience for using fertilizer
+      addExperience(fertilizerData.experience);
+      
+      // Update achievements after using fertilizer
+      setTimeout(() => get().updateAchievements(), 0);
+      
+      // If plant is ready after applying fertilizer, harvest it
+      if (newTimeLeft === 0) {
+        setTimeout(() => {
+          get().harvestPlant(plotId);
+        }, 100);
+      }
+      
+      // Force state update for Telegram WebApp
+      setTimeout(() => {
+        const state = get();
+        set({ ...state });
+      }, 100);
+    }
+  },
+
   // UI actions
   setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements' | 'rating') => {
     set({ activeTab: tab });
@@ -581,11 +792,6 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   // Force state update for Telegram WebApp
   forceStateUpdate: () => {
     const state = get();
-    console.log('forceStateUpdate: Forcing state update', {
-      user: state.user,
-      warehouse: state.warehouse,
-      currentPlant: state.currentPlant
-    });
     set({ ...state });
   },
 
@@ -599,19 +805,25 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const levelData = achievement.levels.find(l => l.level === level);
     if (!levelData || achievement.claimedLevels.includes(level)) return;
     
-    // Check if user has reached this level
-    let currentProgress = 0;
-    switch (achievementType) {
-      case 'clicks':
-        currentProgress = user.totalClicks;
-        break;
-      case 'harvests':
-        currentProgress = user.totalHarvests;
-        break;
-      case 'plots':
-        currentProgress = get().farmPlots.filter(p => p.isUnlocked).length;
-        break;
-    }
+          // Check if user has reached this level
+      let currentProgress = 0;
+      switch (achievementType) {
+        case 'clicks':
+          currentProgress = user.totalClicks;
+          break;
+        case 'harvests':
+          currentProgress = user.totalHarvests;
+          break;
+        case 'plots':
+          currentProgress = get().farmPlots.filter(p => p.isUnlocked).length;
+          break;
+        case 'waterings':
+          currentProgress = user.totalWaterings;
+          break;
+        case 'fertilizers':
+          currentProgress = user.totalFertilizers;
+          break;
+      }
     
     if (currentProgress >= levelData.requirement) {
       // Add reward coins
@@ -629,6 +841,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   updateAchievements: () => {
     const { achievements, user, farmPlots } = get();
     
+    
     const updatedAchievements = achievements.map(achievement => {
       let currentProgress = 0;
       let currentLevel = 0;
@@ -642,6 +855,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           break;
         case 'plots':
           currentProgress = farmPlots.filter(p => p.isUnlocked).length;
+          break;
+        case 'waterings':
+          currentProgress = user.totalWaterings;
+          break;
+        case 'fertilizers':
+          currentProgress = user.totalFertilizers;
           break;
       }
       
@@ -660,6 +879,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       };
     });
     
+    
     set({ achievements: updatedAchievements });
   },
 
@@ -671,13 +891,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const isTestMode = process.env.NODE_ENV === 'development';
     
     if (!state.user.id) {
-      console.log('saveGameState: Skipping save - no user ID');
       return;
     }
     
     // In production, only allow real Telegram user IDs (numeric strings)
     if (!isTestMode && (state.user.id === '1' || isNaN(Number(state.user.id)))) {
-      console.log('saveGameState: Skipping save - invalid user ID for production:', state.user.id);
       return;
     }
 
@@ -714,13 +932,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const isTestMode = process.env.NODE_ENV === 'development';
     
     if (!user.id) {
-      console.log('loadGameState: Skipping load - no user ID');
       return;
     }
     
     // In production, only allow real Telegram user IDs (numeric strings)
     if (!isTestMode && (user.id === '1' || isNaN(Number(user.id)))) {
-      console.log('loadGameState: Skipping load - invalid user ID for production:', user.id);
       return;
     }
 
@@ -737,6 +953,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           const currentState = get();
           const savedState = result.gameState;
           
+          
           set({
             user: savedState.user,
             warehouse: savedState.warehouse,
@@ -745,6 +962,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
             selectedPlantType: savedState.selectedPlantType || currentState.selectedPlantType,
+            selectedFertilizerType: savedState.selectedFertilizerType || currentState.selectedFertilizerType,
             syncStatus: 'idle',
             lastSyncTime: Date.now()
           });

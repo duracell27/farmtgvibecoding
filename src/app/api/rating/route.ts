@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
           coins: user.coins || 0,
           totalClicks: user.totalClicks || 0,
           totalHarvests: user.totalHarvests || 0,
+          totalWaterings: user.totalWaterings || 0,
         },
         rank: index + 1,
         value,

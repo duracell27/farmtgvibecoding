@@ -6,10 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const gameState: GameState = await request.json();
     
-    console.log('Save API: Received request for user:', gameState.user?.id);
     
     if (!gameState.user?.id) {
-      console.log('Save API: No user ID provided');
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
@@ -18,10 +16,8 @@ export async function POST(request: NextRequest) {
 
     let db;
     try {
-      console.log('Save API: Attempting database connection...');
       const connection = await connectToDatabase();
       db = connection.db;
-      console.log('Save API: Database connection successful');
     } catch (dbError) {
       console.error('Save API: Database connection failed:', {
         error: dbError,
@@ -42,7 +38,6 @@ export async function POST(request: NextRequest) {
     
     const collection = db.collection('game_states');
 
-    console.log('Save API: Connected to database, saving for user:', gameState.user.id);
 
     // Upsert game state (update if exists, insert if not)
     const result = await collection.updateOne(
@@ -60,11 +55,6 @@ export async function POST(request: NextRequest) {
       { upsert: true }
     );
 
-    console.log('Save API: Save result:', {
-      modifiedCount: result.modifiedCount,
-      upsertedCount: result.upsertedCount,
-      matchedCount: result.matchedCount,
-    });
 
     return NextResponse.json({
       success: true,

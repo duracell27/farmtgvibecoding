@@ -35,11 +35,9 @@ export const useTelegram = () => {
   useEffect(() => {
     if (!isMounted) return;
 
-    console.log('useTelegram: Starting initialization');
 
     const initializeTelegram = async () => {
       try {
-        console.log('useTelegram: Attempting to initialize Telegram WebApp');
         
         // Check if we're in Telegram WebApp environment
         if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
@@ -58,7 +56,6 @@ export const useTelegram = () => {
             
             // Only validate once per session or if more than 5 minutes have passed
             if (timeSinceLastValidation > 5 * 60 * 1000) {
-              console.log('useTelegram: Validating init data');
               validationAttempted.current = true;
               lastValidationTime.current = now;
               
@@ -75,7 +72,6 @@ export const useTelegram = () => {
               if (response.ok) {
                 const result = await response.json();
                 if (result.valid && result.user) {
-                  console.log('useTelegram: User data validated:', result.user);
                   
                   // Get current state to preserve game progress
                   const currentState = useGameStore.getState();
@@ -97,7 +93,6 @@ export const useTelegram = () => {
                     },
                   });
                   
-                  console.log('useTelegram: User data updated, game progress preserved');
                 }
               } else {
                 console.warn('useTelegram: Validation failed');
@@ -108,7 +103,6 @@ export const useTelegram = () => {
                 // Fallback to unsafe data
                 const tgUser = tg.initDataUnsafe?.user as TelegramUser;
                 if (tgUser) {
-                  console.log('useTelegram: Using unsafe user data:', tgUser);
                   
                   // Get current state to preserve game progress
                   const currentState = useGameStore.getState();
@@ -131,15 +125,11 @@ export const useTelegram = () => {
                 }
               }
             } else {
-              console.log('useTelegram: Validation skipped - already attempted recently');
             }
           } else if (initData) {
-            console.log('useTelegram: Validation already attempted in this session');
           } else {
-            console.log('useTelegram: No init data available');
           }
         } else {
-          console.log('useTelegram: Telegram WebApp not available');
         }
       } catch (error) {
         console.warn('useTelegram: Initialization failed:', error);
@@ -149,21 +139,17 @@ export const useTelegram = () => {
     // Always set ready to true after a short delay
     // This prevents infinite loading screen
     const timer = setTimeout(() => {
-      console.log('useTelegram: Setting ready to true after timeout');
       setIsReady(true);
     }, 1000);
 
     // Try to initialize Telegram if available
     if (typeof window !== 'undefined') {
       if (window.Telegram?.WebApp) {
-        console.log('useTelegram: Telegram WebApp available immediately');
         initializeTelegram();
       } else {
-        console.log('useTelegram: Waiting for Telegram WebApp to load');
         // Wait for script to load
         const checkTelegram = setInterval(() => {
           if (window.Telegram?.WebApp) {
-            console.log('useTelegram: Telegram WebApp loaded');
             clearInterval(checkTelegram);
             initializeTelegram();
           }
@@ -171,7 +157,6 @@ export const useTelegram = () => {
 
         // Clear interval after 2 seconds
         setTimeout(() => {
-          console.log('useTelegram: Stopping Telegram check');
           clearInterval(checkTelegram);
         }, 2000);
       }

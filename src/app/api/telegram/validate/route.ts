@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
     const cached = validationCache.get(cacheKey);
     
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-      console.log('Telegram validation: Using cached result');
       return NextResponse.json(cached.result);
     }
 
