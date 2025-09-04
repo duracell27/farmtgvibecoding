@@ -299,7 +299,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, saveGameState, showLevelUpModal } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -373,9 +373,6 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       
       // Update achievements after harvest
       setTimeout(() => get().updateAchievements(), 0);
-
-      // Save game state after important action
-      setTimeout(() => saveGameState(), 1000);
 
       // Force state update for Telegram WebApp
       setTimeout(() => {
@@ -482,7 +479,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => {
-    const { warehouse, user, saveGameState } = get();
+    const { warehouse, user } = get();
     if (warehouse[product] >= amount) {
       // Find the plant data to get sell price
       const plantType = product as PlantType;
@@ -501,8 +498,6 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         },
       });
 
-      // Save game state after selling
-      setTimeout(() => saveGameState(), 1000);
 
       // Force state update for Telegram WebApp
       setTimeout(() => {
@@ -514,7 +509,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Farm actions
   unlockPlot: (plotId: string) => {
-    const { farmPlots, user, saveGameState } = get();
+    const { farmPlots, user } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && !plot.isUnlocked && user.coins >= plot.unlockPrice) {
@@ -534,31 +529,16 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       
       // Update achievements after unlocking plot
       setTimeout(() => get().updateAchievements(), 0);
-      
-      // Save game state after unlocking plot
-      setTimeout(() => saveGameState(), 1000);
     }
   },
 
   selectPlantType: (plantType: PlantType | null) => {
     set({ selectedPlantType: plantType });
-    
-    // Save game state when plant type is selected
-    setTimeout(() => {
-      const { saveGameState } = get();
-      saveGameState();
-    }, 1000);
   },
 
   // UI actions
   setActiveTab: (tab: 'farm' | 'warehouse' | 'achievements' | 'rating') => {
     set({ activeTab: tab });
-    
-    // Save game state when tab is changed
-    setTimeout(() => {
-      const { saveGameState } = get();
-      saveGameState();
-    }, 1000);
   },
 
   startGame: () => {

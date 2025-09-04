@@ -1,60 +1,60 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { useGameStore, PLANT_DATA } from '@/store/gameStore';
-import { PlantType } from '@/types/game';
-import { PlantSelectionModal } from './PlantSelectionModal';
+import { useState } from "react";
+import Image from "next/image";
+import { useGameStore, PLANT_DATA } from "@/store/gameStore";
+import { PlantType } from "@/types/game";
+import { PlantSelectionModal } from "./PlantSelectionModal";
 
 export const Farm = () => {
-  const { 
-    farmPlots, 
-    user, 
-    selectedPlantType, 
-    clickPlant, 
-    plantSeed, 
-    unlockPlot, 
+  const {
+    farmPlots,
+    user,
+    selectedPlantType,
+    clickPlant,
+    plantSeed,
+    unlockPlot,
     selectPlantType,
-    isHarvesting 
+    isHarvesting,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clickedPlantId, setClickedPlantId] = useState<string | null>(null);
 
   const handlePlotClick = (plotId: string) => {
-    const plot = farmPlots.find(p => p.id === plotId);
-    
-    console.log('handlePlotClick:', {
+    const plot = farmPlots.find((p) => p.id === plotId);
+
+    console.log("handlePlotClick:", {
       plotId,
       plot: plot ? { id: plot.id, isUnlocked: plot.isUnlocked, hasPlant: !!plot.plant } : null,
       selectedPlantType,
-      userCoins: user.coins
+      userCoins: user.coins,
     });
-    
+
     if (!plot) return;
-    
+
     if (!plot.isUnlocked) {
       // Try to unlock the plot
-      console.log('Trying to unlock plot:', plotId);
+      console.log("Trying to unlock plot:", plotId);
       unlockPlot(plotId);
       return;
     }
-    
+
     if (plot.plant) {
       // Click on existing plant
-      console.log('Clicking on existing plant:', plotId);
-      
+      console.log("Clicking on existing plant:", plotId);
+
       // Add click animation
       setClickedPlantId(plotId);
       setTimeout(() => setClickedPlantId(null), 200);
-      
+
       clickPlant(plotId);
     } else if (selectedPlantType) {
       // Plant selected seed
-      console.log('Planting seed:', { plotId, plantType: selectedPlantType });
+      console.log("Planting seed:", { plotId, plantType: selectedPlantType });
       plantSeed(plotId, selectedPlantType);
     } else {
-      console.log('No plant selected for planting');
+      console.log("No plant selected for planting");
     }
   };
 
@@ -100,35 +100,25 @@ export const Farm = () => {
             )}
           </button>
         </div>
-
-
       </div>
 
       {/* Farm Plots */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-gray-800">
-            Грядки: {farmPlots.filter(p => p.isUnlocked).length}/{farmPlots.length}
+            Грядки: {farmPlots.filter((p) => p.isUnlocked).length}/{farmPlots.length}
           </h3>
           {(() => {
-            const lockedPlots = farmPlots.filter(p => !p.isUnlocked);
+            const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
             const nextPlot = lockedPlots[0]; // First locked plot
-            
-            console.log('Debug - lockedPlots:', lockedPlots);
-            console.log('Debug - nextPlot:', nextPlot);
-            
+
+            console.log("Debug - lockedPlots:", lockedPlots);
+            console.log("Debug - nextPlot:", nextPlot);
+
             if (nextPlot) {
-              return (
-                <div className="text-sm text-gray-600">
-                  Наступна: 💰 {nextPlot.unlockPrice}
-                </div>
-              );
+              return <div className="text-sm text-gray-600">Наступна: 💰 {nextPlot.unlockPrice}</div>;
             }
-            return (
-              <div className="text-sm text-green-600">
-                Всі 7 грядок розблоковані! 🎉
-              </div>
-            );
+            return <div className="text-sm text-green-600">Всі 7 грядок розблоковані! 🎉</div>;
           })()}
         </div>
         <div className="grid grid-cols-2 gap-4 border border-gray-200 rounded-lg p-2">
@@ -136,125 +126,121 @@ export const Farm = () => {
             .filter((plot) => {
               // Show unlocked plots and the next locked plot
               if (plot.isUnlocked) return true;
-              
+
               // Find the first locked plot (next available for purchase)
-              const lockedPlots = farmPlots.filter(p => !p.isUnlocked);
+              const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
               const firstLockedPlot = lockedPlots[0];
-              
+
               return plot.id === firstLockedPlot?.id;
             })
             .map((plot, index) => (
-            <div
-              key={plot.id}
-              className="relative"
-            >
-              {/* Plot number for debugging */}
-              <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
-                {index + 1}
-              </div>
-              {/* Plot status for debugging */}
-              <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
-                {plot.isUnlocked ? '✓' : '🔒'}
-              </div>
-              <button
-                onClick={() => handlePlotClick(plot.id)}
-                className={`aspect-square w-full rounded-lg border-2 transition-all relative overflow-hidden p-0 ${
-                  plot.isUnlocked
-                    ? 'border-green-300 hover:border-green-400'
-                    : 'border-gray-400'
-                }`}
-                disabled={isHarvesting}
-              >
-                {/* Soil as the main plot background */}
-                <div className={`w-full h-full relative ${!plot.isUnlocked ? 'grayscale opacity-50' : ''}`}>
-                  <Image
-                    src="/images/soil.png"
-                    alt="Soil"
-                    fill
-                    className="object-contain rounded-lg"
-                  />
-                  
-                  {/* Plant positioned on top of soil */}
-                  {plot.plant && (
-                    <div className="absolute inset-0 flex items-center justify-start pl-5">
-                      <div className={`relative transition-transform ease-in-out ${
-                        clickedPlantId === plot.id ? 'scale-85' : 'scale-100'
-                      }`}>
-                        <Image
-                          src={PLANT_DATA[plot.plant.type].image}
-                          alt={PLANT_DATA[plot.plant.type].name}
-                          width={48}
-                          height={48}
-                          className="w-16 h-16 object-contain"
-                        />
-                        
-                        {/* Timer */}
-                        {plot.plant.timeLeft > 0 && (
-                          <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-green-600 border border-green-300">
-                            {plot.plant.timeLeft}
-                          </div>
-                        )}
-                        
-                        {/* Ready indicator */}
-                        {plot.plant.isReady && (
-                          <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-white">
-                            ✓
-                          </div>
+              <div key={plot.id} className="relative">
+                {/* Plot number for debugging */}
+                <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
+                  {index + 1}
+                </div>
+                {/* Plot status for debugging */}
+                <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded z-10">
+                  {plot.isUnlocked ? "✓" : "🔒"}
+                </div>
+                <button
+                  onClick={() => handlePlotClick(plot.id)}
+                  className={`aspect-square w-full rounded-lg border-2 transition-all relative overflow-hidden p-0 ${
+                    plot.isUnlocked ? "border-green-300 hover:border-green-400" : "border-gray-400"
+                  }`}
+                  disabled={isHarvesting}
+                >
+                  {/* Soil as the main plot background */}
+                  <div className={`w-full h-full relative ${!plot.isUnlocked ? "grayscale opacity-50" : ""}`}>
+                    <Image src="/images/soil.png" alt="Soil" fill className="object-contain rounded-lg" />
+
+                    {/* Plant positioned on top of soil */}
+                    {plot.plant && (
+                      <div className="absolute inset-0 flex items-center justify-start pl-5">
+                        <div
+                          className={`relative transition-transform ease-in-out ${
+                            clickedPlantId === plot.id ? "scale-85" : "scale-100"
+                          }`}
+                        >
+                          <Image
+                            src={PLANT_DATA[plot.plant.type].image}
+                            alt={PLANT_DATA[plot.plant.type].name}
+                            width={48}
+                            height={48}
+                            className="w-16 h-16 object-contain"
+                          />
+
+                          {/* Timer */}
+                          {plot.plant.timeLeft > 0 && (
+                            <div className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-green-600 border border-green-300">
+                              {plot.plant.timeLeft}
+                            </div>
+                          )}
+
+                          {/* Ready indicator */}
+                          {plot.plant.isReady && (
+                            <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-white">
+                              ✓
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Unlock button for locked plots */}
+                  {!plot.isUnlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60">
+                      <div className="text-center text-white">
+                        {user.coins >= plot.unlockPrice ? (
+                          <>
+                            <div className="text-lg font-medium">🛒</div>
+                            <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
+                            <div className="text-xs text-green-300 font-medium">Купити</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-lg font-medium">🔒</div>
+                            <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
+                            <div className="text-xs text-red-300 font-medium">
+                              Потрібно: {plot.unlockPrice - user.coins} 💰
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>
                   )}
-                </div>
-                
-                {/* Unlock button for locked plots */}
-                {!plot.isUnlocked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60">
-                    <div className="text-center text-white">
-                      {user.coins >= plot.unlockPrice ? (
-                        <>
-                          <div className="text-lg font-medium">🛒</div>
-                          <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
-                          <div className="text-xs text-green-300 font-medium">Купити</div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-lg font-medium">🔒</div>
-                          <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
-                          <div className="text-xs text-red-300 font-medium">
-                            Потрібно: {plot.unlockPrice - user.coins} 💰
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Selected plant indicator */}
-                {plot.isUnlocked && !plot.plant && selectedPlantType && user.coins >= PLANT_DATA[selectedPlantType].buyPrice && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20">
-                    <div className="text-green-600 text-sm font-medium">
-                      Садити {PLANT_DATA[selectedPlantType].name}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Insufficient funds indicator */}
-                {plot.isUnlocked && !plot.plant && selectedPlantType && user.coins < PLANT_DATA[selectedPlantType].buyPrice && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-20">
-                    <div className="text-red-600 text-center">
-                      <div className="text-2xl font-bold">⚠️</div>
-                      <div className="text-xs font-medium">
-                        Недостатньо коштів!
+
+                  {/* Selected plant indicator */}
+                  {plot.isUnlocked &&
+                    !plot.plant &&
+                    selectedPlantType &&
+                    user.coins >= PLANT_DATA[selectedPlantType].buyPrice && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20">
+                        <div className="text-white flex flex-col items-center justify-center text-sm font-medium">
+                          Садити {PLANT_DATA[selectedPlantType].name} 💰{" "}
+                          {PLANT_DATA[selectedPlantType].buyPrice}
+                          <Image src={PLANT_DATA[selectedPlantType].image} alt="Coin" width={50} height={50} />
+                        </div>
                       </div>
-                      <div className="text-xs">
-                        Потрібно: {PLANT_DATA[selectedPlantType].buyPrice} 💰
+                    )}
+
+                  {/* Insufficient funds indicator */}
+                  {plot.isUnlocked &&
+                    !plot.plant &&
+                    selectedPlantType &&
+                    user.coins < PLANT_DATA[selectedPlantType].buyPrice && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-20">
+                        <div className="text-white text-center">
+                          <div className="text-2xl font-bold">⚠️</div>
+                          <div className="text-xs font-medium">Недостатньо коштів!</div>
+                          <div className="text-xs">Потрібно: {PLANT_DATA[selectedPlantType].buyPrice} 💰</div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
-              </button>
-            </div>
-          ))}
+                    )}
+                </button>
+              </div>
+            ))}
         </div>
       </div>
 

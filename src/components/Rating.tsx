@@ -3,6 +3,7 @@
 import { useGameStore } from "@/store/gameStore";
 import { RatingType } from "@/types/game";
 import { useEffect } from "react";
+import Image from "next/image";
 
 export const Rating = () => {
   const { 
@@ -15,19 +16,16 @@ export const Rating = () => {
   } = useGameStore();
 
   useEffect(() => {
-    // Always load rating data when component mounts or activeRatingType changes
-    loadRatingData(activeRatingType);
-  }, [activeRatingType, loadRatingData]);
-
-  useEffect(() => {
-    // Refresh rating data when user switches to rating tab
-    if (activeTab === 'rating') {
+    // Only load rating data when user switches to rating tab for the first time
+    if (activeTab === 'rating' && !ratingData) {
       loadRatingData(activeRatingType);
     }
-  }, [activeTab, activeRatingType, loadRatingData]);
+  }, [activeTab, activeRatingType, loadRatingData, ratingData]);
 
   const handleRatingTypeChange = (type: RatingType) => {
     setActiveRatingType(type);
+    // Load data for the new type
+    loadRatingData(type);
   };
 
   const getRatingTypeLabel = (type: RatingType) => {
@@ -75,9 +73,10 @@ export const Rating = () => {
           <button
             onClick={() => loadRatingData(activeRatingType)}
             disabled={syncStatus === 'loading'}
-            className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            {syncStatus === 'loading' ? '⏳' : '🔄'}
+            <span>{syncStatus === 'loading' ? '⏳' : '🔄'}</span>
+            <span>{syncStatus === 'loading' ? 'Оновлення...' : 'Оновити'}</span>
           </button>
         </div>
 
@@ -149,9 +148,11 @@ export const Rating = () => {
                       {/* Avatar */}
                       <div className="flex-shrink-0">
                         {entry.user.avatarUrl ? (
-                          <img
+                          <Image
                             src={entry.user.avatarUrl}
                             alt={entry.user.firstName}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full"
                           />
                         ) : (
