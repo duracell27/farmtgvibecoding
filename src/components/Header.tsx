@@ -55,8 +55,19 @@ export const Header = () => {
     return `${days} дн тому`;
   };
 
+  const getNextSyncTime = () => {
+    if (!lastSyncTime) return null;
+    
+    const now = Date.now();
+    const timeSinceLastSync = now - lastSyncTime;
+    const syncInterval = 30000; // 30 seconds
+    const timeUntilNextSync = syncInterval - (timeSinceLastSync % syncInterval);
+    
+    return Math.ceil(timeUntilNextSync / 1000); // Return seconds
+  };
+
   return (
-    <header className="bg-green-600 text-white p-4 shadow-lg pt-24">
+    <header className="bg-green-600 text-white p-4 shadow-lg pt-24 relative z-50">
       <div className="max-w-sm mx-auto">
         {/* User info */}
         <div className="flex items-center justify-between mb-3">
@@ -119,6 +130,10 @@ export const Header = () => {
                 {syncStatus === 'idle' && lastSyncTime && (
                   <div className="text-xs text-green-200">
                     ✅ {formatLastSyncTime(lastSyncTime)}
+                    {(() => {
+                      const nextSyncSeconds = getNextSyncTime();
+                      return nextSyncSeconds !== null ? ` (${nextSyncSeconds}с)` : '';
+                    })()}
                   </div>
                 )}
               </div>
