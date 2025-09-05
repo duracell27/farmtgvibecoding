@@ -34,16 +34,29 @@ export const useGameSync = () => {
     // For testing purposes, allow test user ID '1' to work
     const isTestMode = process.env.NODE_ENV === 'development';
     
+    console.log('useGameSync: Loading game state', {
+      userId: user.id,
+      isTestMode,
+      isInitialLoadRef: isInitialLoadRef.current
+    });
+    
     if (!isInitialLoadRef.current && user.id && (user.id !== '1' || isTestMode)) {
       isInitialLoadRef.current = true;
-      loadGameState().finally(() => {
+      console.log('useGameSync: Starting loadGameState');
+      loadGameState().then(() => {
+        console.log('useGameSync: loadGameState completed successfully');
         setIsInitialSyncComplete(true);
+      }).catch((error) => {
+        console.error('useGameSync: loadGameState failed', error);
+        setIsInitialSyncComplete(true); // Still mark as complete to avoid infinite loading
       });
     } else if (user.id === '1' && !isTestMode) {
       // For production with test user, mark as complete immediately
+      console.log('useGameSync: Test user in production, marking as complete');
       setIsInitialSyncComplete(true);
     } else if (!user.id) {
       // No user ID, mark as complete
+      console.log('useGameSync: No user ID, marking as complete');
       setIsInitialSyncComplete(true);
     }
   }, [user.id, loadGameState]);

@@ -35,17 +35,20 @@ export const useTelegram = () => {
   useEffect(() => {
     if (!isMounted) return;
 
+    console.log('useTelegram: Starting initialization');
 
     const initializeTelegram = async () => {
       try {
         
         // Check if we're in Telegram WebApp environment
         if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+          console.log('useTelegram: Telegram WebApp detected');
           const tg = window.Telegram.WebApp;
           
           // Initialize Telegram WebApp
           tg.ready();
           tg.expand();
+          console.log('useTelegram: Telegram WebApp initialized');
           
           // Get init data for validation
           const initData = tg.initData;
@@ -132,7 +135,13 @@ export const useTelegram = () => {
         } else {
         }
       } catch (error) {
-        console.warn('useTelegram: Initialization failed:', error);
+        console.error('useTelegram: Initialization failed:', error);
+        console.error('useTelegram: Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'Unknown',
+          url: typeof window !== 'undefined' ? window.location.href : 'Unknown'
+        });
       }
     };
 

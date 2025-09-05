@@ -30,13 +30,21 @@ export default function Home() {
   // Start game when component mounts
   React.useEffect(() => {
     try {
+      console.log('Home: Starting game', { isReady, isInitialSyncComplete });
       if (isReady) {
         startGame();
+        console.log('Home: Game started successfully');
       }
     } catch (error) {
-      console.error('Error starting game:', error);
+      console.error('Home: Error starting game:', error);
+      console.error('Home: Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        isReady,
+        isInitialSyncComplete
+      });
     }
-  }, [isReady, startGame]);
+  }, [isReady, isInitialSyncComplete, startGame]);
 
   if (isLoading) {
     return (

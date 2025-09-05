@@ -994,6 +994,13 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       }
     } catch (error) {
       console.error('loadGameState: Error', error);
+      console.error('loadGameState: Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: user.id,
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'Unknown',
+        url: typeof window !== 'undefined' ? window.location.href : 'Unknown'
+      });
       set({ syncStatus: 'error' });
     }
   },
