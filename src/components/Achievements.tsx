@@ -17,10 +17,11 @@ export const Achievements = () => {
   };
 
   const getProgressPercentage = (achievement: typeof achievements[0]) => {
-    if (achievement.currentLevel === 0) {
-      const nextLevel = achievement.levels[0];
-      return Math.min(100, (achievement.currentProgress / nextLevel.requirement) * 100);
-    }
+      if (achievement.currentLevel === 0) {
+    const nextLevel = achievement.levels[0];
+    const currentProgress = achievement.currentProgress || 0;
+    return Math.min(100, (currentProgress / nextLevel.requirement) * 100);
+  }
     
     if (achievement.currentLevel >= 7) {
       return 100;
@@ -31,7 +32,8 @@ export const Achievements = () => {
     
     if (!currentLevelData || !nextLevelData) return 100;
     
-    const progressInCurrentLevel = achievement.currentProgress - currentLevelData.requirement;
+    const currentProgress = achievement.currentProgress || 0;
+    const progressInCurrentLevel = currentProgress - currentLevelData.requirement;
     const requiredForNext = nextLevelData.requirement - currentLevelData.requirement;
     
     return Math.min(100, (progressInCurrentLevel / requiredForNext) * 100);
@@ -55,7 +57,8 @@ export const Achievements = () => {
           
           // Get visible levels: completed + next one
           const visibleLevels = achievement.levels.filter(level => {
-            const isCompleted = achievement.currentProgress >= level.requirement;
+            const currentProgress = achievement.currentProgress || 0;
+            const isCompleted = currentProgress >= level.requirement;
             const isNext = level.level === achievement.currentLevel + 1;
             return isCompleted || isNext;
           });
@@ -73,7 +76,7 @@ export const Achievements = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-green-600">Рівень {achievement.currentLevel}/7</div>
-                  <div className="text-xs text-gray-500">{achievement.currentProgress.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">{(achievement.currentProgress || 0).toLocaleString()}</div>
                 </div>
               </div>
               
@@ -95,7 +98,8 @@ export const Achievements = () => {
               {/* Compact Achievement Levels */}
               <div className="space-y-1">
                 {visibleLevels.map((level) => {
-                  const isCompleted = achievement.currentProgress >= level.requirement;
+                  const currentProgress = achievement.currentProgress || 0;
+                  const isCompleted = currentProgress >= level.requirement;
                   const isClaimed = achievement.claimedLevels.includes(level.level);
                   const canClaim = isCompleted && !isClaimed;
                   

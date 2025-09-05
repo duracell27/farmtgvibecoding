@@ -875,7 +875,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       return {
         ...achievement,
         currentLevel,
-        currentProgress,
+        currentProgress: currentProgress || 0, // Ensure currentProgress is never undefined
       };
     });
     
