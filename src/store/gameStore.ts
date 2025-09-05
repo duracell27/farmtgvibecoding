@@ -953,12 +953,27 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           const currentState = get();
           const savedState = result.gameState;
           
+          // Ensure all achievement types are present (for backward compatibility)
+          const mergedAchievements = Object.values(ACHIEVEMENT_DATA).map(defaultAchievement => {
+            const savedAchievement = savedState.achievements?.find((a: Achievement) => a.type === defaultAchievement.type);
+            if (savedAchievement) {
+              // Use saved achievement data but ensure all required fields exist
+              return {
+                ...defaultAchievement,
+                currentLevel: savedAchievement.currentLevel || 0,
+                currentProgress: savedAchievement.currentProgress || 0,
+                claimedLevels: savedAchievement.claimedLevels || [],
+              };
+            }
+            // Use default achievement if not found in saved data
+            return defaultAchievement;
+          });
           
           set({
             user: savedState.user,
             warehouse: savedState.warehouse,
             farmPlots: savedState.farmPlots,
-            achievements: savedState.achievements,
+            achievements: mergedAchievements,
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
             selectedPlantType: savedState.selectedPlantType || currentState.selectedPlantType,
@@ -966,6 +981,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             syncStatus: 'idle',
             lastSyncTime: Date.now()
           });
+          
+          // Update achievements after loading to ensure progress is calculated correctly
+          setTimeout(() => {
+            get().updateAchievements();
+          }, 100);
         } else {
           set({ syncStatus: 'idle' });
         }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 
 export const useGameSync = () => {
@@ -15,6 +15,7 @@ export const useGameSync = () => {
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
   const isInitialLoadRef = useRef<boolean>(false);
+  const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false);
 
   // Debounced save function - only save if enough time has passed
   const debouncedSave = useCallback(async () => {
@@ -35,7 +36,15 @@ export const useGameSync = () => {
     
     if (!isInitialLoadRef.current && user.id && (user.id !== '1' || isTestMode)) {
       isInitialLoadRef.current = true;
-      loadGameState();
+      loadGameState().finally(() => {
+        setIsInitialSyncComplete(true);
+      });
+    } else if (user.id === '1' && !isTestMode) {
+      // For production with test user, mark as complete immediately
+      setIsInitialSyncComplete(true);
+    } else if (!user.id) {
+      // No user ID, mark as complete
+      setIsInitialSyncComplete(true);
     }
   }, [user.id, loadGameState]);
 
@@ -116,5 +125,6 @@ export const useGameSync = () => {
     lastSyncTime,
     manualSave,
     isAutoSyncEnabled: user.id && (user.id !== '1' || isTestMode),
+    isInitialSyncComplete,
   };
 };

@@ -13,16 +13,19 @@ import { useGameStore } from '@/store/gameStore';
 import { useTimer } from '@/hooks/useTimer';
 import { useTelegram } from '@/hooks/useTelegram';
 import { useGameSync } from '@/hooks/useGameSync';
+import { useLoadingPhrases } from '@/hooks/useLoadingPhrases';
 
 export default function Home() {
   const { activeTab, startGame, levelUpModal, closeLevelUpModal } = useGameStore();
   const { isReady } = useTelegram();
+  const { isInitialSyncComplete } = useGameSync();
   
   // Start the game timer
   useTimer();
   
-  // Initialize game sync
-  useGameSync();
+  // Loading phrases
+  const isLoading = !isReady || !isInitialSyncComplete;
+  const loadingPhrase = useLoadingPhrases(isLoading);
 
   // Start game when component mounts
   React.useEffect(() => {
@@ -35,7 +38,7 @@ export default function Home() {
     }
   }, [isReady, startGame]);
 
-  if (!isReady) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="text-center">
@@ -44,8 +47,8 @@ export default function Home() {
           <div className="mt-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
-            Якщо завантаження триває довго, спробуйте оновити сторінку
+          <p className="text-sm text-gray-500 mt-4 transition-all duration-500">
+            {loadingPhrase}
           </p>
         </div>
       </div>

@@ -4,11 +4,13 @@ import Image from 'next/image';
 import { useGameStore } from '@/store/gameStore';
 import { useEffect, useState } from 'react';
 import { useGameSync } from '@/hooks/useGameSync';
+import { HelpModal } from './HelpModal';
 
 export const Header = () => {
   const { user, forceStateUpdate } = useGameStore();
   const { syncStatus, lastSyncTime, isAutoSyncEnabled } = useGameSync();
   const [, setCurrentTime] = useState(Date.now());
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   // Force state update when component mounts to ensure data is fresh
   useEffect(() => {
@@ -68,6 +70,16 @@ export const Header = () => {
 
   return (
     <header className="bg-green-600 text-white p-4 shadow-lg pt-24 relative z-50">
+      {/* Help button - centered at the top */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+        <button
+          onClick={() => setIsHelpModalOpen(true)}
+          className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
+        >
+          ❓ Як грати?
+        </button>
+      </div>
+
       <div className="max-w-sm mx-auto">
         {/* User info */}
         <div className="flex items-center justify-between mb-3">
@@ -159,6 +171,12 @@ export const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Help Modal */}
+      <HelpModal 
+        isOpen={isHelpModalOpen} 
+        onClose={() => setIsHelpModalOpen(false)} 
+      />
     </header>
   );
 };
