@@ -36,6 +36,8 @@ export const Rating = () => {
         return 'За урожаями';
       case 'clicks':
         return 'За кліками';
+      case 'fertilizers':
+        return 'За добривами';
     }
   };
 
@@ -47,6 +49,8 @@ export const Rating = () => {
         return `${value} урожаїв`;
       case 'clicks':
         return `${value.toLocaleString()} кліків`;
+      case 'fertilizers':
+        return `${value} добрив`;
     }
   };
 
@@ -82,7 +86,7 @@ export const Rating = () => {
 
         {/* Rating type tabs */}
         <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
-          {(['level', 'harvests', 'clicks'] as RatingType[]).map((type) => (
+          {(['level', 'harvests', 'clicks', 'fertilizers'] as RatingType[]).map((type) => (
             <button
               key={type}
               onClick={() => handleRatingTypeChange(type)}

@@ -72,7 +72,7 @@ export interface User {
   totalFertilizers: number;
 }
 
-export type RatingType = 'level' | 'harvests' | 'clicks';
+export type RatingType = 'level' | 'harvests' | 'clicks' | 'fertilizers';
 
 export interface RatingEntry {
   user: User;

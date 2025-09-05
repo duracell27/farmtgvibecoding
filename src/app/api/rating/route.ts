@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') as RatingType;
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    if (!type || !['level', 'harvests', 'clicks'].includes(type)) {
+    if (!type || !['level', 'harvests', 'clicks', 'fertilizers'].includes(type)) {
       return NextResponse.json(
         { success: false, error: 'Invalid rating type' },
         { status: 400 }
@@ -41,6 +41,9 @@ export async function GET(request: NextRequest) {
       case 'clicks':
         sortCriteria = { 'gameState.user.totalClicks': -1 };
         break;
+      case 'fertilizers':
+        sortCriteria = { 'gameState.user.totalFertilizers': -1 };
+        break;
     }
 
     // Get top game states
@@ -64,6 +67,9 @@ export async function GET(request: NextRequest) {
         case 'clicks':
           value = user.totalClicks || 0;
           break;
+        case 'fertilizers':
+          value = user.totalFertilizers || 0;
+          break;
       }
 
       return {
@@ -80,6 +86,7 @@ export async function GET(request: NextRequest) {
           totalClicks: user.totalClicks || 0,
           totalHarvests: user.totalHarvests || 0,
           totalWaterings: user.totalWaterings || 0,
+          totalFertilizers: user.totalFertilizers || 0,
         },
         rank: index + 1,
         value,
