@@ -41,9 +41,9 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
           {/* Reward Coins */}
           <div className="mb-6">
             <div className="bg-yellow-100 rounded-xl p-4 border-2 border-yellow-300">
-              <div className="text-3xl mb-2">💰</div>
-              <div className="text-2xl font-bold text-yellow-800">
-                +{rewardCoins} монет
+              <div className="text-2xl font-bold text-yellow-800 flex items-center justify-center space-x-2">
+                <span>+{rewardCoins}</span>
+                <Image src="/images/монета.png" alt="Монети" width={28} height={28} className="w-7 h-7 object-contain" />
               </div>
               <div className="text-sm text-yellow-600 mt-1">
                 Нагорода за досягнення рівня!
@@ -60,13 +60,16 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
                   Нова рослина розблокована!
                 </div>
                 <div className="flex items-center justify-center space-x-3">
-                  <Image
-                    src={newPlantData.image}
-                    alt={newPlantData.name}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain"
-                  />
+                  <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
+                    <Image
+                      src={newPlantData.image}
+                      alt={newPlantData.name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-contain"
+                      style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                    />
+                  </div>
                   <div className="text-left">
                     <div className="font-bold text-green-800 text-lg">
                       {newPlantData.name}
@@ -77,9 +80,15 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
                   </div>
                 </div>
                 <div className="mt-3 text-sm text-green-700 space-y-1">
-                  <div>💰 Ціна: {newPlantData.buyPrice} монет</div>
-                  <div>⏱️ Час росту: {newPlantData.growTime} сек</div>
-                  <div>💵 Продаж: {newPlantData.sellPrice} монет</div>
+                  <div className="flex justify-start items-center space-x-1">
+                    <span>Ціна: {newPlantData.buyPrice}</span>
+                    <Image src="/images/монета.png" alt="Монети" width={16} height={16} className="w-4 h-4 object-contain" />
+                  </div>
+                  <div className="flex justify-start items-center space-x-1">Час росту: {newPlantData.growTime} сек ⏱️</div>
+                  <div className="flex justify-start items-center space-x-1">
+                    <span>Продаж: {newPlantData.sellPrice}</span>
+                    <Image src="/images/монета.png" alt="Монети" width={16} height={16} className="w-4 h-4 object-contain" />
+                  </div>
                 </div>
               </div>
             </div>

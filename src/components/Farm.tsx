@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useGameStore, PLANT_DATA, FERTILIZER_DATA } from "@/store/gameStore";
 import { PlantType, FertilizerType } from "@/types/game";
 import { PlantSelectionModal } from "./PlantSelectionModal";
@@ -22,6 +23,9 @@ export const Farm = () => {
     isHarvesting,
     waterPlant,
     clearPlot,
+    toastMessage,
+    toastType,
+    clearToast,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,6 +163,11 @@ export const Farm = () => {
 
   return (
     <div className="py-4 px-1 max-w-sm mx-auto">
+      {toastMessage && (
+        <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-[70] px-3 py-2 rounded-md text-white text-sm shadow-lg ${toastType === 'warning' ? 'bg-yellow-600' : toastType === 'error' ? 'bg-red-600' : 'bg-green-600'}`} onAnimationEnd={clearToast}>
+          {toastMessage}
+        </div>
+      )}
       {/* Plant Selection and Fertilizer Buttons */}
       <div className="mb-6">
         <div className="flex items-center justify-evenly mb-4">
@@ -171,13 +180,16 @@ export const Farm = () => {
             >
               {selectedPlantType ? (
                 <>
-                  <Image
-                    src={PLANT_DATA[selectedPlantType].image}
-                    alt={PLANT_DATA[selectedPlantType].name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                  />
+                  <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                    <Image
+                      src={PLANT_DATA[selectedPlantType].image}
+                      alt={PLANT_DATA[selectedPlantType].name}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-contain"
+                      style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                    />
+                  </div>
                   <span>{PLANT_DATA[selectedPlantType].name}</span>
                   <span
                     onClick={(e) => {
@@ -204,13 +216,16 @@ export const Farm = () => {
             >
               {selectedFertilizerType ? (
                 <>
-                  <Image
-                    src={FERTILIZER_DATA[selectedFertilizerType].image}
-                    alt={FERTILIZER_DATA[selectedFertilizerType].name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                  />
+                  <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                    <Image
+                      src={FERTILIZER_DATA[selectedFertilizerType].image}
+                      alt={FERTILIZER_DATA[selectedFertilizerType].name}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-contain"
+                      style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                    />
+                  </div>
                   <span>{FERTILIZER_DATA[selectedFertilizerType].name}</span>
                   <span
                     onClick={(e) => {
@@ -245,7 +260,13 @@ export const Farm = () => {
 
 
             if (nextPlot) {
-              return <div className="text-sm text-gray-600">Наступна: 💰 {nextPlot.unlockPrice}</div>;
+              return (
+                <div className="text-sm text-gray-600 flex items-center space-x-1">
+                  <span>Наступна:</span>
+                  <span className="font-medium">{nextPlot.unlockPrice}</span>
+                  <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-6 h-6 object-contain" />
+                </div>
+              );
             }
             return <div className="text-sm text-green-600">Всі 7 грядок розблоковані! 🎉</div>;
           })()}
@@ -293,13 +314,16 @@ export const Farm = () => {
                             clickedPlantId === plot.id ? "scale-85" : "scale-100"
                           }`}
                         >
-                          <Image
-                            src={PLANT_DATA[plot.plant.type].image}
-                            alt={PLANT_DATA[plot.plant.type].name}
-                            width={48}
-                            height={48}
-                            className="w-16 h-16 object-contain"
-                          />
+                          <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
+                            <Image
+                              src={PLANT_DATA[plot.plant.type].image}
+                              alt={PLANT_DATA[plot.plant.type].name}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-contain"
+                              style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                            />
+                          </div>
 
                           {/* Timer */}
                           {plot.plant.timeLeft > 0 && (
@@ -456,15 +480,24 @@ export const Farm = () => {
                         {user.coins >= plot.unlockPrice ? (
                           <>
                             <div className="text-lg font-medium">🛒</div>
-                            <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
+                            <div className="text-sm font-bold flex items-center space-x-1 justify-center">
+                              <span>{plot.unlockPrice}</span>
+                              <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                            </div>
                             <div className="text-xs text-green-300 font-medium">Купити</div>
                           </>
                         ) : (
                           <>
                             <div className="text-lg font-medium">🔒</div>
-                            <div className="text-sm font-bold">💰 {plot.unlockPrice}</div>
+                            <div className="text-sm font-bold flex items-center space-x-1 justify-center">
+                              <span>{plot.unlockPrice}</span>
+                              <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                            </div>
                             <div className="text-xs text-red-300 font-medium">
-                              Потрібно: {plot.unlockPrice - user.coins} 💰
+                              <span className="flex items-center justify-center space-x-1">
+                                <span>Потрібно: {plot.unlockPrice - user.coins}</span>
+                                <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                              </span>
                             </div>
                           </>
                         )}
@@ -479,14 +512,14 @@ export const Farm = () => {
                     user.coins >= PLANT_DATA[selectedPlantType].buyPrice && (
                       <div className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20">
                         <div className="text-white flex flex-col items-center justify-center text-sm font-medium">
-                          Садити {PLANT_DATA[selectedPlantType].name} 💰{" "}
-                          {PLANT_DATA[selectedPlantType].buyPrice}
-                          <Image
-                            src={PLANT_DATA[selectedPlantType].image}
-                            alt="Coin"
-                            width={50}
-                            height={50}
-                          />
+                          <div className="flex items-center space-x-1">
+                            <span>Садити {PLANT_DATA[selectedPlantType].name}</span>
+                            <span className="font-bold">{PLANT_DATA[selectedPlantType].buyPrice}</span>
+                            <Image src="/images/монета.png" alt="Монети" width={16} height={16} className="w-4 h-4 object-contain" />
+                          </div>
+                          <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
+                            <Image src={PLANT_DATA[selectedPlantType].image} alt={PLANT_DATA[selectedPlantType].name} width={64} height={64} className="w-full h-full object-contain" style={{ transform: 'scale(1.45)', transformOrigin: 'center' }} />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -500,7 +533,10 @@ export const Farm = () => {
                         <div className="text-white text-center">
                           <div className="text-2xl font-bold">⚠️</div>
                           <div className="text-xs font-medium">Недостатньо коштів!</div>
-                          <div className="text-xs">Потрібно: {PLANT_DATA[selectedPlantType].buyPrice} 💰</div>
+                          <div className="text-xs flex items-center justify-center space-x-1">
+                            <span>Потрібно: {PLANT_DATA[selectedPlantType].buyPrice}</span>
+                            <Image src="/images/монета.png" alt="Монети" width={12} height={12} className="w-3 h-3 object-contain" />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -510,8 +546,19 @@ export const Farm = () => {
         </div>
       </div>
 
+      {/* Separator and City link */}
+      <div className="my-4">
+        <div className="border-t border-gray-200" />
+        <div className="mt-3 w-full">
+          <Link href="/city" className="flex bg-green-700 rounded-lg p-2 space-x-2 text-white hover:text-green-800 font-medium">
+            <Image src="/images/місто.png" alt="Місто" width={20} height={20} className="w-7 h-7 object-contain" />
+            <span className="text-xl font-bold">Місто</span>
+          </Link>
+        </div>
+      </div>
+
       {/* Instructions */}
-      <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+      {/* <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
         <p className="font-medium mb-1">Як грати:</p>
         <ul className="space-y-1 text-xs">
           <li>• Натисніть &quot;Рослина&quot; для вибору насіння</li>
@@ -528,7 +575,7 @@ export const Farm = () => {
           <li>• Збирайте урожай коли рослина готова</li>
           <li>• Розблокуйте нові грядки за монети</li>
         </ul>
-      </div>
+      </div> */}
 
       {/* Plant Selection Modal */}
       <PlantSelectionModal

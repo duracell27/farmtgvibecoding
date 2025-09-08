@@ -95,9 +95,9 @@ export const FertilizerModal = ({ isOpen, onClose, onSelect, selectedFertilizerT
                     <div className="flex-1 text-left">
                       <div className="font-semibold text-lg text-gray-800">{fertilizer.name}</div>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <div>💰 Ціна: {fertilizer.price} монет</div>
+                        <div className="flex items-center space-x-1"><span>Ціна: {fertilizer.price}</span><Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" /></div>
                         <div>⚡ Скорочення: {formatTimeReduction(fertilizer.timeReduction)}</div>
-                        <div>🎯 Досвід: {fertilizer.experience} очок</div>
+                        <div className="flex items-center space-x-1"><span>Досвід: {fertilizer.experience}</span><Image src="/images/досвід.png" alt="Досвід" width={14} height={14} className="w-3.5 h-3.5 object-contain" /></div>
                         <div className="text-xs text-gray-500 italic">{fertilizer.description}</div>
                       </div>
                     </div>
@@ -133,9 +133,9 @@ export const FertilizerModal = ({ isOpen, onClose, onSelect, selectedFertilizerT
                       <div className="flex-1 text-left">
                         <div className="font-semibold text-lg text-gray-500">{fertilizer.name}</div>
                         <div className="text-sm text-gray-400 space-y-1">
-                          <div>💰 Ціна: {fertilizer.price} монет</div>
+                          <div className="flex items-center space-x-1"><span>Ціна: {fertilizer.price}</span><Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" /></div>
                           <div>⚡ Скорочення: {formatTimeReduction(fertilizer.timeReduction)}</div>
-                          <div>🎯 Досвід: {fertilizer.experience} очок</div>
+                          <div className="flex items-center space-x-1"><span>Досвід: {fertilizer.experience}</span><Image src="/images/досвід.png" alt="Досвід" width={14} height={14} className="w-3.5 h-3.5 object-contain" /></div>
                           <div className="text-xs text-gray-400 italic">{fertilizer.description}</div>
                         </div>
                       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 
 export const useGameSync = () => {
@@ -9,13 +10,15 @@ export const useGameSync = () => {
     saveGameState, 
     loadGameState, 
     syncStatus, 
-    lastSyncTime 
+    lastSyncTime,
+    initialSyncDone
   } = useGameStore();
   
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
   const isInitialLoadRef = useRef<boolean>(false);
   const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false);
+  const pathname = usePathname();
 
   // Debounced save function - only save if enough time has passed
   const debouncedSave = useCallback(async () => {
@@ -29,7 +32,7 @@ export const useGameSync = () => {
     }
   }, [saveGameState, syncStatus]);
 
-  // Load game state on mount
+  // Load game state on mount (only once per app session)
   useEffect(() => {
     // For testing purposes, allow test user ID '1' to work
     const isTestMode = process.env.NODE_ENV === 'development';
@@ -40,7 +43,7 @@ export const useGameSync = () => {
       isInitialLoadRef: isInitialLoadRef.current
     });
     
-    if (!isInitialLoadRef.current && user.id && (user.id !== '1' || isTestMode)) {
+    if (!isInitialLoadRef.current && !initialSyncDone && user.id && (user.id !== '1' || isTestMode)) {
       isInitialLoadRef.current = true;
       console.log('useGameSync: Starting loadGameState');
       loadGameState().then(() => {
@@ -58,15 +61,18 @@ export const useGameSync = () => {
       // No user ID, mark as complete
       console.log('useGameSync: No user ID, marking as complete');
       setIsInitialSyncComplete(true);
+    } else if (initialSyncDone) {
+      // Already synced earlier in session
+      setIsInitialSyncComplete(true);
     }
-  }, [user.id, loadGameState]);
+  }, [user.id, loadGameState, initialSyncDone]);
 
-  // Set up automatic sync every 30 seconds
+  // Set up automatic sync every 30 seconds (only on main game page)
   useEffect(() => {
     // For testing purposes, allow test user ID '1' to work
     const isTestMode = process.env.NODE_ENV === 'development';
     
-    if (user.id && (user.id !== '1' || isTestMode)) {
+    if (pathname === '/' && user.id && (user.id !== '1' || isTestMode)) {
       // Clear any existing interval
       if (syncIntervalRef.current) {
         clearInterval(syncIntervalRef.current);
@@ -90,7 +96,7 @@ export const useGameSync = () => {
         clearInterval(syncIntervalRef.current);
       }
     };
-  }, [user.id, debouncedSave]);
+  }, [pathname, user.id, debouncedSave]);
 
   // Save on page unload
   useEffect(() => {

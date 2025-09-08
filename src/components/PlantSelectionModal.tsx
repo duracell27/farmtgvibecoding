@@ -71,20 +71,23 @@ export const PlantSelectionModal = ({ isOpen, onClose, onSelect, selectedPlantTy
                   }`}
                 >
                   <div className="flex items-center space-x-4">
-                    <Image
-                      src={plant.image}
-                      alt={plant.name}
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 object-contain"
-                    />
+                    <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
+                      <Image
+                        src={plant.image}
+                        alt={plant.name}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-contain"
+                        style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                      />
+                    </div>
                     <div className="flex-1 text-left">
                       <div className="font-semibold text-lg text-gray-800">{plant.name}</div>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <div>💰 Ціна: {plant.buyPrice} монет</div>
+                        <div className="flex items-center space-x-1"><span>Ціна: {plant.buyPrice}</span><Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5  object-contain" /></div>
                         <div>⏱️ Час росту: {plant.growTime} секунд</div>
-                        <div>🎯 Досвід: {plant.experience} очок</div>
-                        <div>💵 Продаж: {plant.sellPrice} монет</div>
+                        <div className="flex items-center space-x-1"><span>Досвід: {plant.experience}</span><Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-5 h-5 object-contain" /></div>
+                        <div className="flex items-center space-x-1"><span>Продаж: {plant.sellPrice}</span><Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" /></div>
                       </div>
                     </div>
                     <div className={`text-2xl ${
@@ -109,20 +112,23 @@ export const PlantSelectionModal = ({ isOpen, onClose, onSelect, selectedPlantTy
                     className="w-full p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-60"
                   >
                     <div className="flex items-center space-x-4">
-                      <Image
-                        src={plant.image}
-                        alt={plant.name}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 object-contain grayscale"
-                      />
+                      <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={plant.image}
+                          alt={plant.name}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-contain grayscale"
+                          style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+                        />
+                      </div>
                       <div className="flex-1 text-left">
                         <div className="font-semibold text-lg text-gray-500">{plant.name}</div>
                         <div className="text-sm text-gray-400 space-y-1">
-                          <div>💰 Ціна: {plant.buyPrice} монет</div>
+                          <div className="flex items-center space-x-1"><span>Ціна: {plant.buyPrice}</span><Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" /></div>
                           <div>⏱️ Час росту: {plant.growTime} секунд</div>
-                          <div>🎯 Досвід: {plant.experience} очок</div>
-                          <div>💵 Продаж: {plant.sellPrice} монет</div>
+                          <div className="flex items-center space-x-1"><span>Досвід: {plant.experience}</span><Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-5 h-5 object-contain" /></div>
+                          <div className="flex items-center space-x-1"><span>Продаж: {plant.sellPrice}</span><Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" /></div>
                         </div>
                       </div>
                       <div className="text-gray-400 text-center">

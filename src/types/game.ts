@@ -1,4 +1,4 @@
-export type PlantType = 'dill' | 'parsley' | 'onion' | 'cucumber' | 'tomato';
+export type PlantType = string;
 
 export type FertilizerType = 'humus' | 'azofoska' | 'pidsilivach' | 'katalizator';
 
@@ -31,6 +31,7 @@ export interface PlantData {
   buyPrice: number;
   sellPrice: number;
   experience: number;
+  fruitsPerHarvest: number;
 }
 
 export interface FertilizerData {
@@ -66,6 +67,7 @@ export interface User {
   experience: number;
   experienceToNextLevel: number;
   coins: number;
+  emeralds: number;
   totalClicks: number;
   totalHarvests: number;
   totalWaterings: number;
@@ -86,13 +88,7 @@ export interface RatingData {
   totalUsers: number;
 }
 
-export interface Warehouse {
-  dill: number;
-  parsley: number;
-  onion: number;
-  cucumber: number;
-  tomato: number;
-}
+export type Warehouse = Record<string, number>;
 
 export interface FarmPlot {
   id: string;
@@ -105,6 +101,10 @@ export interface GameState {
   user: User;
   currentPlant: Plant | null;
   warehouse: Warehouse;
+  warehouseLevel: number;
+  warehouseCapacity: number;
+  toastMessage?: string | null;
+  toastType?: 'info' | 'warning' | 'error' | null;
   activeTab: 'farm' | 'warehouse' | 'achievements' | 'rating';
   isGameRunning: boolean;
   isHarvesting: boolean;
@@ -114,6 +114,7 @@ export interface GameState {
   achievements: Achievement[];
   syncStatus: 'idle' | 'saving' | 'loading' | 'error';
   lastSyncTime: number | null;
+  initialSyncDone?: boolean;
   ratingData: RatingData | null;
   activeRatingType: RatingType;
   levelUpModal: {
@@ -121,6 +122,11 @@ export interface GameState {
     newLevel: number;
     newPlantType: PlantType | null;
     rewardCoins: number;
+  };
+  // Daily exchange state
+  exchange: {
+    usedToday: number; // emeralds exchanged today
+    resetAt: number;   // timestamp for next reset (midnight)
   };
 }
 
@@ -140,6 +146,11 @@ export interface GameActions {
   
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => void;
+  upgradeWarehouse: () => void;
+
+  // UI
+  showToast: (message: string, type?: 'info' | 'warning' | 'error') => void;
+  clearToast: () => void;
   
   // Farm actions
   unlockPlot: (plotId: string) => void;
@@ -163,6 +174,7 @@ export interface GameActions {
   saveGameState: () => Promise<void>;
   loadGameState: () => Promise<void>;
   setSyncStatus: (status: 'idle' | 'saving' | 'loading' | 'error') => void;
+  setLastSyncNow: () => void;
   
   // Rating actions
   loadRatingData: (type: RatingType) => Promise<void>;
@@ -174,4 +186,9 @@ export interface GameActions {
   
   // State management
   forceStateUpdate: () => void;
+
+  // Exchange actions
+  exchangeCoinsForEmeraldsByCoins: (coinsAmount: number) => void;
+  exchangeMaxToday: () => void;
+  getExchangeRemainingToday: () => number;
 }

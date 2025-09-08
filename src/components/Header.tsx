@@ -9,6 +9,7 @@ import { HelpModal } from './HelpModal';
 export const Header = () => {
   const { user, forceStateUpdate } = useGameStore();
   const { syncStatus, lastSyncTime, isAutoSyncEnabled } = useGameSync();
+  const { setLastSyncNow } = useGameStore();
   const [, setCurrentTime] = useState(Date.now());
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
@@ -71,12 +72,12 @@ export const Header = () => {
   return (
     <header className="bg-green-600 text-white p-4 shadow-lg pt-24 relative z-50">
       {/* Help button - centered at the top */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+      <div className="absolute top-10 left-1/2 transform -translate-x-1/2">
         <button
           onClick={() => setIsHelpModalOpen(true)}
           className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
         >
-          ❓ Як грати?
+           Як грати ❓ 
         </button>
       </div>
 
@@ -120,7 +121,16 @@ export const Header = () => {
           </div>
           
           <div className="text-right">
-            <div className="text-2xl font-bold">💰 {user.coins}</div>
+            <div className="flex items-center justify-end space-x-1">
+              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-1">
+                <span className="text-lg font-bold">{user.coins}</span>
+                <Image src="/images/монета.png" alt="Монети" width={24} height={24} className="w-6 h-6 object-contain" />
+              </div>
+              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-1">
+                <span className="text-lg font-bold">{user.emeralds}</span>
+                <Image src="/images/смарагд.png" alt="Смарагд" width={24} height={24} className="w-6 h-6 object-contain" />
+              </div>
+            </div>
             {/* Sync status indicator */}
             {isAutoSyncEnabled && (
               <div className="flex items-center justify-end mt-1">
@@ -148,6 +158,9 @@ export const Header = () => {
                     })()}
                   </div>
                 )}
+                {!lastSyncTime && syncStatus === 'idle' && (
+                  <button onClick={setLastSyncNow} className="text-xs text-green-200 underline">Позначити синхронізовано</button>
+                )}
               </div>
             )}
           </div>
@@ -157,8 +170,11 @@ export const Header = () => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Рівень {user.level}</span>
-            <span className="text-sm text-green-100">
-              {user.experience % user.experienceToNextLevel} / {user.experienceToNextLevel} досвіду
+            <span className="text-sm text-green-100 inline-flex items-center space-x-1">
+              <span>
+                {user.experience % user.experienceToNextLevel} / {user.experienceToNextLevel}
+              </span>
+              <Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-6 h-6 object-contain" />
             </span>
           </div>
           

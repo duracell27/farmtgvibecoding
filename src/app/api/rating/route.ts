@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
           experience: user.experience || 0,
           experienceToNextLevel: user.experienceToNextLevel || 50,
           coins: user.coins || 0,
+          emeralds: user.emeralds || 0,
           totalClicks: user.totalClicks || 0,
           totalHarvests: user.totalHarvests || 0,
           totalWaterings: user.totalWaterings || 0,

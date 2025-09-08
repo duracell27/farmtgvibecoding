@@ -16,7 +16,7 @@ import { useGameSync } from '@/hooks/useGameSync';
 import { useLoadingPhrases } from '@/hooks/useLoadingPhrases';
 
 export default function Home() {
-  const { activeTab, startGame, levelUpModal, closeLevelUpModal } = useGameStore();
+  const { activeTab, startGame, levelUpModal, closeLevelUpModal, initialSyncDone } = useGameStore();
   const { isReady } = useTelegram();
   const { isInitialSyncComplete } = useGameSync();
   
@@ -24,7 +24,8 @@ export default function Home() {
   useTimer();
   
   // Loading phrases
-  const isLoading = !isReady || !isInitialSyncComplete;
+  // Show loader only before the very first sync; ignore isReady after that
+  const isLoading = !initialSyncDone && (!isInitialSyncComplete || !isReady);
   const loadingPhrase = useLoadingPhrases(isLoading);
 
   // Start game when component mounts
@@ -68,7 +69,7 @@ export default function Home() {
       <div className="min-h-screen bg-green-50">
         <Header />
         
-        <main className="pb-20 max-w-sm mx-auto">
+        <main className="pb-24 max-w-sm mx-auto" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}>
           {activeTab === 'farm' ? (
             <Farm />
           ) : activeTab === 'warehouse' ? (

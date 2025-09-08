@@ -10,8 +10,9 @@ const initialUser: User = {
   avatarUrl: '',
   level: 1,
   experience: 0,
-  experienceToNextLevel: 50, // Level 2 requires 50 exp
+  experienceToNextLevel: 25, // Level 2 requires 25 exp
   coins: 10, // Start with 10 coins
+  emeralds: 10, // Start with 10 emeralds
   totalClicks: 0,
   totalHarvests: 0,
   totalWaterings: 0,
@@ -64,65 +65,118 @@ export const FERTILIZER_DATA: Record<FertilizerType, FertilizerData> = {
 
 // Plant data configuration
 export const PLANT_DATA: Record<PlantType, PlantData> = {
-  dill: {
-    type: 'dill',
-    name: 'Кріп',
-    image: '/images/dill.png',
-    requiredLevel: 1,
-    growTime: 15,
-    buyPrice: 1,
-    sellPrice: 2,
-    experience: 3,
-  },
-  parsley: {
-    type: 'parsley',
-    name: 'Петрушка',
-    image: '/images/parsley.png',
-    requiredLevel: 2,
-    growTime: 25,
-    buyPrice: 3,
-    sellPrice: 5,
-    experience: 5,
-  },
-  onion: {
-    type: 'onion',
-    name: 'Цибуля',
-    image: '/images/onion.png',
-    requiredLevel: 3,
-    growTime: 35,
-    buyPrice: 4,
-    sellPrice: 7,
-    experience: 7,
-  },
-  cucumber: {
-    type: 'cucumber',
-    name: 'Огірок',
-    image: '/images/cucumber.png',
-    requiredLevel: 4,
-    growTime: 60,
-    buyPrice: 7,
-    sellPrice: 13,
-    experience: 15,
-  },
-  tomato: {
-    type: 'tomato',
-    name: 'Томати',
-    image: '/images/tomato.png',
-    requiredLevel: 5,
-    growTime: 100,
-    buyPrice: 12,
-    sellPrice: 23,
-    experience: 24,
-  },
+  "redis": {"type":"redis","name":"Редис","image":"/images/seeds/редис.png","requiredLevel":1,"growTime":15,"buyPrice":1,"sellPrice":2,"experience":3,"fruitsPerHarvest":1},
+  "kres-salat": {"type":"kres-salat","name":"Кресс-салат","image":"/images/seeds/крес-салат.png","requiredLevel":2,"growTime":25,"buyPrice":3,"sellPrice":5,"experience":5,"fruitsPerHarvest":1},
+  "shpynat": {"type":"shpynat","name":"Шпинат","image":"/images/seeds/шпинат.png","requiredLevel":3,"growTime":40,"buyPrice":6,"sellPrice":21,"experience":14,"fruitsPerHarvest":1},
+  "rukola": {"type":"rukola","name":"Рукола","image":"/images/seeds/рукола.png","requiredLevel":4,"growTime":60,"buyPrice":10,"sellPrice":50,"experience":37,"fruitsPerHarvest":1},
+  "latuk": {"type":"latuk","name":"Латук","image":"/images/seeds/салат.png","requiredLevel":5,"growTime":125,"buyPrice":18,"sellPrice":90,"experience":74,"fruitsPerHarvest":1},
+  "zelena-tsybulya": {"type":"zelena-tsybulya","name":"Зелена цибуля","image":"/images/seeds/зелена-цибуля.png","requiredLevel":6,"growTime":226,"buyPrice":28,"sellPrice":129,"experience":126,"fruitsPerHarvest":2},
+  "krip": {"type":"krip","name":"Кріп","image":"/images/seeds/кріп.png","requiredLevel":7,"growTime":362,"buyPrice":42,"sellPrice":156,"experience":190,"fruitsPerHarvest":2},
+  "petrushka": {"type":"petrushka","name":"Петрушка","image":"/images/seeds/петрушка.png","requiredLevel":8,"growTime":538,"buyPrice":60,"sellPrice":180,"experience":267,"fruitsPerHarvest":2},
+  "bazylik": {"type":"bazylik","name":"Базилік","image":"/images/seeds/базилік.png","requiredLevel":9,"growTime":786,"buyPrice":80,"sellPrice":251,"experience":349,"fruitsPerHarvest":2},
+  "koriandr": {"type":"koriandr","name":"Коріандр","image":"/images/seeds/коріандр.png","requiredLevel":10,"growTime":1134,"buyPrice":104,"sellPrice":332,"experience":437,"fruitsPerHarvest":2},
+  "morkva": {"type":"morkva","name":"Морква","image":"/images/seeds/морква.png","requiredLevel":11,"growTime":1570,"buyPrice":132,"sellPrice":391,"experience":538,"fruitsPerHarvest":3},
+  "buryak": {"type":"buryak","name":"Буряк","image":"/images/seeds/буряк.png","requiredLevel":12,"growTime":2090,"buyPrice":164,"sellPrice":429,"experience":646,"fruitsPerHarvest":3},
+  "horokh": {"type":"horokh","name":"Горох","image":"/images/seeds/горох.png","requiredLevel":13,"growTime":2688,"buyPrice":200,"sellPrice":459,"experience":766,"fruitsPerHarvest":3},
+  "kvasolia": {"type":"kvasolia","name":"Квасоля","image":"/images/seeds/квасоля.png","requiredLevel":14,"growTime":3412,"buyPrice":240,"sellPrice":504,"experience":894,"fruitsPerHarvest":3},
+  "ohirok": {"type":"ohirok","name":"Огірки","image":"/images/seeds/огірок.png","requiredLevel":15,"growTime":4241,"buyPrice":282,"sellPrice":533,"experience":1031,"fruitsPerHarvest":3},
+  "kabachok": {"type":"kabachok","name":"Кабачки","image":"/images/seeds/кабачок.png","requiredLevel":16,"growTime":5198,"buyPrice":325,"sellPrice":555,"experience":1175,"fruitsPerHarvest":4},
+  "polunytsya": {"type":"polunytsya","name":"Полуниця","image":"/images/seeds/полуниця.png","requiredLevel":17,"growTime":6308,"buyPrice":370,"sellPrice":604,"experience":1328,"fruitsPerHarvest":4},
+  "brokoli": {"type":"brokoli","name":"Броколі","image":"/images/seeds/броколі.png","requiredLevel":18,"growTime":7562,"buyPrice":419,"sellPrice":662,"experience":1488,"fruitsPerHarvest":4},
+  "kolrabi": {"type":"kolrabi","name":"Кольрабі","image":"/images/seeds/кольрабі.png","requiredLevel":19,"growTime":8930,"buyPrice":471,"sellPrice":709,"experience":1660,"fruitsPerHarvest":4},
+  "cvitna-kapusta": {"type":"cvitna-kapusta","name":"Цвітна капуста","image":"/images/seeds/цвітна-капуста.png","requiredLevel":20,"growTime":10438,"buyPrice":526,"sellPrice":772,"experience":1842,"fruitsPerHarvest":4},
+  "khrin": {"type":"khrin","name":"Хрін","image":"/images/seeds/хрін.png","requiredLevel":21,"growTime":12051,"buyPrice":586,"sellPrice":810,"experience":2034,"fruitsPerHarvest":5},
+  "chasnyk": {"type":"chasnyk","name":"Часник","image":"/images/seeds/часник.png","requiredLevel":22,"growTime":13884,"buyPrice":648,"sellPrice":873,"experience":2239,"fruitsPerHarvest":5},
+  "fenkhel": {"type":"fenkhel","name":"Фенхель","image":"/images/seeds/фенхель.png","requiredLevel":23,"growTime":15924,"buyPrice":713,"sellPrice":932,"experience":2454,"fruitsPerHarvest":5},
+  "pasternak": {"type":"pasternak","name":"Пастернак","image":"/images/seeds/пастернак.png","requiredLevel":24,"growTime":18132,"buyPrice":781,"sellPrice":994,"experience":2681,"fruitsPerHarvest":5},
+  "pomidor": {"type":"pomidor","name":"Помідори","image":"/images/seeds/томат.png","requiredLevel":25,"growTime":20565,"buyPrice":854,"sellPrice":1027,"experience":2913,"fruitsPerHarvest":5},
+  "perets-solodkyi": {"type":"perets-solodkyi","name":"Перець солодкий","image":"/images/seeds/перець.png","requiredLevel":26,"growTime":23128,"buyPrice":933,"sellPrice":1072,"experience":3160,"fruitsPerHarvest":6},
+  "baklazhany": {"type":"baklazhany","name":"Баклажани","image":"/images/seeds/баклажан.png","requiredLevel":27,"growTime":25826,"buyPrice":1020,"sellPrice":1115,"experience":3413,"fruitsPerHarvest":6},
+  "kukurudza": {"type":"kukurudza","name":"Кукурудза","image":"/images/seeds/кукурудза.png","requiredLevel":28,"growTime":28692,"buyPrice":1114,"sellPrice":1159,"experience":3679,"fruitsPerHarvest":6},
+  "dynya": {"type":"dynya","name":"Диня","image":"/images/seeds/диня.png","requiredLevel":29,"growTime":31819,"buyPrice":1218,"sellPrice":1190,"experience":3950,"fruitsPerHarvest":6},
+  "kartoplya": {"type":"kartoplya","name":"Картопля","image":"/images/seeds/картопля.png","requiredLevel":30,"growTime":35156,"buyPrice":1330,"sellPrice":1247,"experience":4228,"fruitsPerHarvest":6},
+  "kapusta-bilogolova": {"type":"kapusta-bilogolova","name":"Капуста білоголова","image":"/images/seeds/капуста.png","requiredLevel":31,"growTime":38741,"buyPrice":1451,"sellPrice":1285,"experience":4511,"fruitsPerHarvest":7},
+  "sonyashnyk": {"type":"sonyashnyk","name":"Соняшник","image":"/images/seeds/соняшник.png","requiredLevel":32,"growTime":42646,"buyPrice":1575,"sellPrice":1328,"experience":4807,"fruitsPerHarvest":7},
+  "harbuz": {"type":"harbuz","name":"Гарбуз","image":"/images/seeds/гарбуз.png","requiredLevel":33,"growTime":46782,"buyPrice":1705,"sellPrice":1386,"experience":5108,"fruitsPerHarvest":7},
+  "kavuny": {"type":"kavuny","name":"Кавуни","image":"/images/seeds/кавун.png","requiredLevel":34,"growTime":51088,"buyPrice":1838,"sellPrice":1432,"experience":5420,"fruitsPerHarvest":7},
+  "sochevytsya": {"type":"sochevytsya","name":"Сочевиця","image":"/images/seeds/сочевиця.png","requiredLevel":35,"growTime":55744,"buyPrice":1974,"sellPrice":1504,"experience":5743,"fruitsPerHarvest":7},
+  "nut": {"type":"nut","name":"Нут","image":"/images/seeds/нут.png","requiredLevel":36,"growTime":60724,"buyPrice":2114,"sellPrice":1538,"experience":6079,"fruitsPerHarvest":8},
+  "hirchytsya": {"type":"hirchytsya","name":"Гірчиця","image":"/images/seeds/гірчиця.png","requiredLevel":37,"growTime":66074,"buyPrice":2260,"sellPrice":1595,"experience":6428,"fruitsPerHarvest":8},
+  "chervonyi-rys": {"type":"chervonyi-rys","name":"Червоний рис","image":"/images/seeds/червоний-рис.png","requiredLevel":38,"growTime":71804,"buyPrice":2413,"sellPrice":1654,"experience":6788,"fruitsPerHarvest":8},
+  "selera": {"type":"selera","name":"Селера","image":"/images/seeds/селера.png","requiredLevel":39,"growTime":77807,"buyPrice":2572,"sellPrice":1705,"experience":7163,"fruitsPerHarvest":8},
+  "soya": {"type":"soya","name":"Соя","image":"/images/seeds/соя.png","requiredLevel":40,"growTime":84010,"buyPrice":2739,"sellPrice":1747,"experience":7550,"fruitsPerHarvest":8},
+  "lon": {"type":"lon","name":"Льон","image":"/images/seeds/льон.png","requiredLevel":41,"growTime":90459,"buyPrice":2910,"sellPrice":1808,"experience":7950,"fruitsPerHarvest":9},
+  "hrechka": {"type":"hrechka","name":"Гречка","image":"/images/seeds/гречка.png","requiredLevel":42,"growTime":97160,"buyPrice":3091,"sellPrice":1833,"experience":8356,"fruitsPerHarvest":9},
+  "yachmin": {"type":"yachmin","name":"Ячмінь","image":"/images/seeds/ячмінь.png","requiredLevel":43,"growTime":104119,"buyPrice":3280,"sellPrice":1906,"experience":8775,"fruitsPerHarvest":9},
+  "oves": {"type":"oves","name":"Овес","image":"/images/seeds/овес.png","requiredLevel":44,"growTime":111386,"buyPrice":3478,"sellPrice":1937,"experience":9200,"fruitsPerHarvest":9},
+  "artyshok": {"type":"artyshok","name":"Артишок","image":"/images/seeds/артишок.png","requiredLevel":45,"growTime":119058,"buyPrice":3679,"sellPrice":1973,"experience":9630,"fruitsPerHarvest":9},
+  "shafran": {"type":"shafran","name":"Шафран","image":"/images/seeds/шафран.png","requiredLevel":46,"growTime":127006,"buyPrice":3888,"sellPrice":1997,"experience":10067,"fruitsPerHarvest":10},
+  "proso": {"type":"proso","name":"Просо","image":"/images/seeds/просо.png","requiredLevel":47,"growTime":135283,"buyPrice":4106,"sellPrice":2031,"experience":10513,"fruitsPerHarvest":10},
+  "imbir": {"type":"imbir","name":"Імбир","image":"/images/seeds/імбир.png","requiredLevel":48,"growTime":143944,"buyPrice":4333,"sellPrice":2066,"experience":10973,"fruitsPerHarvest":10},
+  "kurkuma": {"type":"kurkuma","name":"Куркума","image":"/images/seeds/куркума.png","requiredLevel":49,"growTime":153046,"buyPrice":4563,"sellPrice":2091,"experience":11444,"fruitsPerHarvest":10},
+  "chyli-perets": {"type":"chyli-perets","name":"Чилі-перець","image":"/images/seeds/перець-чілі.png","requiredLevel":50,"growTime":162648,"buyPrice":4799,"sellPrice":2142,"experience":11920,"fruitsPerHarvest":10}
 };
 
-// Level experience requirements
+// Level experience requirements (experience needed to reach each level)
 export const LEVEL_EXPERIENCE_REQUIREMENTS = {
-  2: 50,
-  3: 75,
-  4: 155,
-  5: 280,
-  6: 550,
+  2: 25,
+  3: 144,
+  4: 570,
+  5: 1625,
+  6: 4305,
+  7: 10452,
+  8: 21582,
+  9: 40158,
+  10: 68625,
+  11: 110920,
+  12: 168756,
+  13: 248368,
+  14: 353096,
+  15: 489740,
+  16: 663585,
+  17: 879248,
+  18: 1148966,
+  19: 1469842,
+  20: 1861620,
+  21: 2318748,
+  22: 2857140,
+  23: 3488360,
+  24: 4218039,
+  25: 5047038,
+  26: 5987056,
+  27: 7072275,
+  28: 8309070,
+  29: 9688874,
+  30: 11230308,
+  31: 12951400,
+  32: 14842366,
+  33: 16945970,
+  34: 19269600,
+  35: 21831880,
+  36: 24629132,
+  37: 27665720,
+  38: 31014865,
+  39: 34660860,
+  40: 38602872,
+  41: 42860727,
+  42: 47458416,
+  43: 52387104,
+  44: 57682716,
+  45: 63326879,
+  46: 69366360,
+  47: 75805086,
+  48: 82662755,
+  49: 89999364,
+  50: 97801173,
+} as const;
+
+// Helper to get requirement for next level; falls back to the highest defined requirement
+const getExpForNextLevel = (level: number): number => {
+  const nextLevel = level + 1;
+  const requirement = (LEVEL_EXPERIENCE_REQUIREMENTS as Record<number, number>)[nextLevel];
+  if (typeof requirement === 'number') return requirement;
+  const maxDefinedLevel = Math.max(...Object.keys(LEVEL_EXPERIENCE_REQUIREMENTS).map(Number));
+  return (LEVEL_EXPERIENCE_REQUIREMENTS as Record<number, number>)[maxDefinedLevel];
 };
 
 // Achievement data configuration
@@ -219,15 +273,13 @@ export const ACHIEVEMENT_DATA: Record<AchievementType, Achievement> = {
   },
 };
 
-const initialWarehouse: Warehouse = {
-  dill: 0,
-  parsley: 0,
-  onion: 0,
-  cucumber: 0,
-  tomato: 0,
-};
+const initialWarehouse: Warehouse = Object.keys(PLANT_DATA).reduce((acc, key) => {
+  acc[key] = 0;
+  return acc;
+}, {} as Warehouse);
 
-const createPlant = (type: PlantType = 'dill'): Plant => {
+const defaultPlantType: PlantType = Object.keys(PLANT_DATA)[0];
+const createPlant = (type: PlantType = defaultPlantType): Plant => {
   const plantData = PLANT_DATA[type];
   const now = Date.now();
   return {
@@ -282,12 +334,7 @@ const getNewlyUnlockedPlant = (newLevel: number): PlantType | null => {
 const calculateLevelProgression = (currentLevel: number, currentExp: number, expToAdd: number) => {
   let newLevel = currentLevel;
   let newExp = currentExp + expToAdd;
-  
-  // Get experience requirement for next level
-  const getExpForNextLevel = (level: number) => {
-    return LEVEL_EXPERIENCE_REQUIREMENTS[level + 1 as keyof typeof LEVEL_EXPERIENCE_REQUIREMENTS] || 1000;
-  };
-  
+
   let newExpToNextLevel = getExpForNextLevel(newLevel);
   
   
@@ -314,7 +361,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   user: initialUser,
   currentPlant: null, // No current plant in new system
   warehouse: initialWarehouse,
+  warehouseLevel: 1,
+  warehouseCapacity: 500,
   activeTab: 'farm',
+  toastMessage: null,
+  toastType: null,
   isGameRunning: false,
   isHarvesting: false,
   farmPlots: generateFarmPlots(),
@@ -323,6 +374,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   achievements: Object.values(ACHIEVEMENT_DATA),
   syncStatus: 'idle',
   lastSyncTime: null,
+  initialSyncDone: false,
   ratingData: null,
   activeRatingType: 'level',
   levelUpModal: {
@@ -330,6 +382,15 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     newLevel: 1,
     newPlantType: null,
     rewardCoins: 0,
+  },
+  exchange: {
+    usedToday: 0,
+    resetAt: (() => {
+      const now = new Date();
+      const reset = new Date(now);
+      reset.setHours(24, 0, 0, 0); // next midnight
+      return reset.getTime();
+    })(),
   },
 
   // Plant actions
@@ -370,7 +431,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -404,17 +465,29 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         coins: user.coins + rewardCoins, // Add reward coins
       };
 
-      // Update warehouse - add harvested plant to warehouse
-      const newWarehouse = {
-        ...warehouse,
-        [plot.plant.type]: warehouse[plot.plant.type] + 1,
-      };
+      // Enforce warehouse capacity
+      const currentStored = Object.values(warehouse).reduce((sum, v) => sum + v, 0);
+      if (currentStored >= warehouseCapacity) {
+        // Warehouse full: skip adding and just update user/plots
+        showToast('Склад переповнено', 'warning');
+      } else {
+        // Update warehouse - add harvested plant items based on fruitsPerHarvest
+        const amountToAdd = Math.max(1, plantData.fruitsPerHarvest || 1);
+        const spaceLeft = warehouseCapacity - currentStored;
+        const actualAdd = Math.min(amountToAdd, spaceLeft);
+        warehouse[plot.plant.type] = warehouse[plot.plant.type] + actualAdd;
+        if (actualAdd < amountToAdd) {
+          showToast('Додано не все: склад майже повний', 'warning');
+        }
+      }
 
-      // Create new plant if we have a selected plant type and enough coins
+      // Create new plant if we have a selected plant type and enough coins and capacity is not full
       let newPlant = null;
       if (selectedPlantType) {
         const plantData = PLANT_DATA[selectedPlantType];
-        if (newUser.coins >= plantData.buyPrice) {
+        const currentStoredAfterHarvest = Object.values(warehouse).reduce((sum, v) => sum + v, 0);
+        const canPlant = currentStoredAfterHarvest < warehouseCapacity;
+        if (newUser.coins >= plantData.buyPrice && canPlant) {
           newPlant = createPlant(selectedPlantType);
           // Deduct coins for auto-planting
           newUser.coins -= plantData.buyPrice;
@@ -429,7 +502,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       );
 
       set({
-        warehouse: newWarehouse,
+        warehouse: { ...warehouse },
         user: newUser,
         farmPlots: updatedPlots,
         isHarvesting: false,
@@ -454,11 +527,18 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   plantSeed: (plotId: string, plantType: PlantType) => {
-    const { farmPlots, user } = get();
+    const { farmPlots, user, warehouse, warehouseCapacity, showToast } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     const plantData = PLANT_DATA[plantType];
     
     
+    // Block planting if warehouse is full
+    const currentStored = Object.values(warehouse).reduce((sum, v) => sum + v, 0);
+    if (currentStored >= warehouseCapacity) {
+      showToast('Склад переповнено', 'warning');
+      return;
+    }
+
     if (plot && plot.isUnlocked && !plot.plant && user.coins >= plantData.buyPrice) {
       
       const newPlant = createPlant(plantType);
@@ -646,6 +726,24 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     }
   },
 
+  // Warehouse upgrades
+  upgradeWarehouse: () => {
+    const { warehouseLevel, user } = get();
+    const upgradeCosts: Record<number, { cost: number; capacity: number }> = {
+      1: { cost: 100, capacity: 1000 },
+      2: { cost: 200, capacity: 2000 },
+      3: { cost: 500, capacity: 5000 },
+    };
+    const next = upgradeCosts[warehouseLevel as 1 | 2 | 3];
+    if (!next) return; // Max level reached
+    if (user.emeralds < next.cost) return;
+    set((state) => ({
+      user: { ...state.user, emeralds: state.user.emeralds - next.cost },
+      warehouseLevel: state.warehouseLevel + 1,
+      warehouseCapacity: next.capacity,
+    }));
+  },
+
   // Farm actions
   unlockPlot: (plotId: string) => {
     const { farmPlots, user } = get();
@@ -752,6 +850,20 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     set({ activeTab: tab });
   },
 
+  showToast: (message: string, type: 'info' | 'warning' | 'error' = 'info') => {
+    set({ toastMessage: message, toastType: type });
+    // Auto clear after 2 seconds
+    setTimeout(() => {
+      const state = get();
+      if (state.toastMessage === message) {
+        set({ toastMessage: null, toastType: null });
+      }
+    }, 2000);
+  },
+  clearToast: () => {
+    set({ toastMessage: null, toastType: null });
+  },
+
   startGame: () => {
     set({ isGameRunning: true });
   },
@@ -793,6 +905,84 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   forceStateUpdate: () => {
     const state = get();
     set({ ...state });
+  },
+
+  // Exchange actions
+  exchangeCoinsForEmeraldsByCoins: (coinsAmount: number) => {
+    const { user, exchange, showToast, getExchangeRemainingToday } = get();
+    const COINS_PER_EMERALD = 1000;
+
+    // Reset at midnight if needed
+    const now = Date.now();
+    if (now >= exchange.resetAt) {
+      const nextReset = new Date();
+      nextReset.setHours(24, 0, 0, 0);
+      exchange.usedToday = 0;
+      exchange.resetAt = nextReset.getTime();
+    }
+
+    const emeraldsToGet = Math.floor(coinsAmount / COINS_PER_EMERALD);
+    if (emeraldsToGet <= 0) {
+      showToast('Вкажіть кратно 1000 монет', 'warning');
+      return;
+    }
+    if (user.coins < emeraldsToGet * COINS_PER_EMERALD) {
+      showToast('Недостатньо монет', 'warning');
+      return;
+    }
+
+    const remaining = getExchangeRemainingToday();
+    if (remaining <= 0) {
+      showToast('Ліміт на сьогодні вичерпано', 'warning');
+      return;
+    }
+
+    const actualEmeralds = Math.min(emeraldsToGet, remaining);
+
+    set({
+      user: {
+        ...user,
+        coins: user.coins - actualEmeralds * COINS_PER_EMERALD,
+        emeralds: user.emeralds + actualEmeralds,
+      },
+      exchange: {
+        ...exchange,
+        usedToday: exchange.usedToday + actualEmeralds,
+      },
+    });
+
+    showToast(`Обміняно ${actualEmeralds} смарагдів`, 'info');
+  },
+
+  exchangeMaxToday: () => {
+    const { user, getExchangeRemainingToday, exchange, showToast } = get();
+    const COINS_PER_EMERALD = 1000;
+    const remaining = getExchangeRemainingToday();
+    if (remaining <= 0) {
+      showToast('Ліміт на сьогодні вичерпано', 'warning');
+      return;
+    }
+    const affordableByCoins = Math.floor(user.coins / COINS_PER_EMERALD);
+    const toExchange = Math.min(remaining, affordableByCoins);
+    if (toExchange <= 0) {
+      showToast('Недостатньо монет', 'warning');
+      return;
+    }
+    set({
+      user: { ...user, coins: user.coins - toExchange * COINS_PER_EMERALD, emeralds: user.emeralds + toExchange },
+      exchange: { ...exchange, usedToday: exchange.usedToday + toExchange },
+    });
+    showToast(`Обміняно ${toExchange} смарагдів`, 'info');
+  },
+
+  getExchangeRemainingToday: () => {
+    const { user, exchange } = get();
+    const now = Date.now();
+    if (now >= exchange.resetAt) {
+      return user.level; // after midnight, effectively reset (UI can trigger state refresh)
+    }
+    const dailyLimit = user.level;
+    return Math.max(0, dailyLimit - exchange.usedToday);
   },
 
   // Achievement actions
@@ -926,7 +1116,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   loadGameState: async () => {
-    const { user } = get();
+    const { user, initialSyncDone } = get();
+    if (initialSyncDone) {
+      return;
+    }
     
     // For testing purposes, allow test user ID '1' to work in development
     const isTestMode = process.env.NODE_ENV === 'development';
@@ -969,8 +1162,18 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             return defaultAchievement;
           });
           
+          // Ensure backward compatibility for new fields (e.g., emeralds)
+          const currentStateUser = currentState.user;
+          const mergedUser = {
+            ...currentStateUser,
+            ...savedState.user,
+          } as User;
+          if (typeof mergedUser.emeralds !== 'number') {
+            mergedUser.emeralds = 10;
+          }
+
           set({
-            user: savedState.user,
+            user: mergedUser,
             warehouse: savedState.warehouse,
             farmPlots: savedState.farmPlots,
             achievements: mergedAchievements,
@@ -979,7 +1182,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             selectedPlantType: savedState.selectedPlantType || currentState.selectedPlantType,
             selectedFertilizerType: savedState.selectedFertilizerType || currentState.selectedFertilizerType,
             syncStatus: 'idle',
-            lastSyncTime: Date.now()
+            lastSyncTime: Date.now(),
+            initialSyncDone: true
           });
           
           // Update achievements after loading to ensure progress is calculated correctly
@@ -987,7 +1191,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             get().updateAchievements();
           }, 100);
         } else {
-          set({ syncStatus: 'idle' });
+          set({ syncStatus: 'idle', initialSyncDone: true });
         }
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1001,12 +1205,16 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'Unknown',
         url: typeof window !== 'undefined' ? window.location.href : 'Unknown'
       });
-      set({ syncStatus: 'error' });
+      set({ syncStatus: 'error', initialSyncDone: true });
     }
   },
 
   setSyncStatus: (status: 'idle' | 'saving' | 'loading' | 'error') => {
     set({ syncStatus: status });
+  },
+
+  setLastSyncNow: () => {
+    set({ lastSyncTime: Date.now() });
   },
 
   // Rating actions
