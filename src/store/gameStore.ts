@@ -1146,6 +1146,57 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           const currentState = get();
           const savedState = result.gameState;
           
+          // Migration: remap legacy plant types to new keys
+          const legacyMap: Record<string, PlantType> = {
+            dill: 'krip',
+            parsley: 'petrushka',
+            onion: 'zelena-tsybulya',
+            cucumber: 'ohirok',
+            tomato: 'pomidor',
+          };
+
+          const mapType = (t: PlantType | null | undefined): PlantType | null => {
+            if (!t) return null;
+            const mapped = legacyMap[t] || t;
+            return PLANT_DATA[mapped] ? mapped : null;
+          };
+
+          // Migrate warehouse keys
+          const migratedWarehouse: Warehouse = {} as Warehouse;
+          if (savedState.warehouse) {
+            Object.entries(savedState.warehouse as Record<string, number>).forEach(([k, v]) => {
+              const newKey = mapType(k as PlantType);
+              if (newKey) {
+                migratedWarehouse[newKey] = (migratedWarehouse[newKey] || 0) + (v || 0);
+              }
+            });
+          }
+
+          // Ensure all PLANT_DATA keys exist in warehouse
+          Object.keys(PLANT_DATA).forEach((k) => {
+            if (typeof migratedWarehouse[k] !== 'number') migratedWarehouse[k] = 0;
+          });
+
+          // Migrate farm plots
+          const migratedPlots = Array.isArray(savedState.farmPlots)
+            ? savedState.farmPlots.map((p: FarmPlot) => {
+                if (!p || !p.plant) return p;
+                const newType = mapType(p.plant.type);
+                if (!newType) {
+                  return { ...p, plant: null };
+                }
+                // Also fix times based on new plant if needed
+                const pd = PLANT_DATA[newType];
+                const timeLeft = Math.min(p.plant.timeLeft ?? pd.growTime, pd.growTime);
+                return {
+                  ...p,
+                  plant: { ...p.plant, type: newType, totalTime: pd.growTime, timeLeft },
+                };
+              })
+            : currentState.farmPlots;
+
+          const migratedSelectedPlant = mapType(savedState.selectedPlantType) as PlantType | null;
+          
           // Ensure all achievement types are present (for backward compatibility)
           const mergedAchievements = Object.values(ACHIEVEMENT_DATA).map(defaultAchievement => {
             const savedAchievement = savedState.achievements?.find((a: Achievement) => a.type === defaultAchievement.type);
@@ -1174,12 +1225,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
           set({
             user: mergedUser,
-            warehouse: savedState.warehouse,
-            farmPlots: savedState.farmPlots,
+            warehouse: migratedWarehouse,
+            farmPlots: migratedPlots,
             achievements: mergedAchievements,
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
-            selectedPlantType: savedState.selectedPlantType || currentState.selectedPlantType,
+            selectedPlantType: migratedSelectedPlant || currentState.selectedPlantType,
             selectedFertilizerType: savedState.selectedFertilizerType || currentState.selectedFertilizerType,
             syncStatus: 'idle',
             lastSyncTime: Date.now(),
