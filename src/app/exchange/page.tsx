@@ -40,7 +40,7 @@ export default function ExchangePage() {
   const canExchange = remainingToday > 0 && user.coins >= COINS_PER_EMERALD;
 
   return (
-    <main className="min-h-screen bg-green-50 p-4 max-w-sm mx-auto">
+    <main className="min-h-screen bg-green-50 p-4 pt-[100px] max-w-sm mx-auto">
       <h1 className="text-2xl font-bold mb-4 flex items-center space-x-2">
         <Image src="/images/обмін.png" alt="Обмін" width={28} height={28} className="w-8 h-8 object-contain" />
         <span className="text-2xl text-black font-bold">Обмін</span>

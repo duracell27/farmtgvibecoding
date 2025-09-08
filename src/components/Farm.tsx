@@ -325,9 +325,9 @@ export const Farm = () => {
 
                     {/* Plant positioned on top of soil */}
                     {plot.plant && (
-                      <div className="absolute inset-0 flex items-center justify-start pl-6">
+                      <div className="absolute inset-0 flex items-center justify-start pl-[5%]">
                         <div
-                          className={`relative transition-transform ease-in-out ${
+                          className={`relative transition-transform ease-in-out px-4 ${
                             clickedPlantId === plot.id ? "scale-85" : "scale-100"
                           }`}
                         >
@@ -344,7 +344,7 @@ export const Farm = () => {
 
                           {/* Timer */}
                           {plot.plant.timeLeft > 0 && (
-                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white rounded-full px-2 h-5 min-w-[2.5rem] flex items-center justify-center text-[10px] font-bold text-green-600 border border-green-300">
+                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white rounded-full px-1 min-w-[3.5rem] flex items-center justify-center text-[10px] font-bold text-green-600 border border-green-300">
                               {formatTimeLeftShort(plot.plant.timeLeft)}
                             </div>
                           )}

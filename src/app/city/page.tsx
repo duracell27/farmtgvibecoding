@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function CityPage() {
   return (
-    <main className="min-h-screen bg-green-50 p-4 max-w-sm mx-auto">
+    <main className="min-h-screen bg-green-50 p-4 pt-[100px] max-w-sm mx-auto">
       <h1 className="text-2xl font-bold mb-4 flex items-center space-x-2">
         <Image src="/images/місто.png" alt="Місто" width={28} height={28} className="w-8 h-8 object-contain" />
         <span className="text-2xl text-black font-bold">Місто</span>
