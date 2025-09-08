@@ -95,6 +95,7 @@ export interface FarmPlot {
   isUnlocked: boolean;
   plant: Plant | null;
   unlockPrice: number;
+  unlockCurrency?: 'coins' | 'emeralds';
 }
 
 export interface GameState {

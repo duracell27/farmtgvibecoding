@@ -293,26 +293,43 @@ const createPlant = (type: PlantType = defaultPlantType): Plant => {
   };
 };
 
-const createFarmPlot = (id: string, isUnlocked: boolean = false, unlockPrice: number = 0): FarmPlot => ({
+const createFarmPlot = (id: string, isUnlocked: boolean = false, unlockPrice: number = 0, unlockCurrency: 'coins' | 'emeralds' = 'coins'): FarmPlot => ({
   id,
   isUnlocked,
   plant: null,
   unlockPrice,
+  unlockCurrency,
 });
 
-// Generate farm plots with original pricing (7 plots total)
+// Generate farm plots with new pricing (15 plots total)
 const generateFarmPlots = (): FarmPlot[] => {
   const plots: FarmPlot[] = [];
   
   // First plot is free
   plots.push(createFarmPlot('plot-1', true, 0));
   
-  // Original pricing for 7 plots
-  const prices = [50, 250, 500, 1000, 3000, 5000];
-  
-  for (let i = 2; i <= 7; i++) {
-    const unlockPrice = prices[i - 2];
-    plots.push(createFarmPlot(`plot-${i}`, false, unlockPrice));
+  // New pricing list for plots 2..15
+  const pricing: Array<{ price: number; currency: 'coins' | 'emeralds' }> = [
+    { price: 1000, currency: 'coins' },      // 2
+    { price: 3000, currency: 'coins' },      // 3
+    { price: 10000, currency: 'coins' },     // 4
+    { price: 50, currency: 'emeralds' },     // 5
+    { price: 20000, currency: 'coins' },     // 6
+    { price: 50000, currency: 'coins' },     // 7
+    { price: 100000, currency: 'coins' },    // 8
+    { price: 300000, currency: 'coins' },    // 9
+    { price: 200, currency: 'emeralds' },    // 10
+    { price: 500000, currency: 'coins' },    // 11
+    { price: 1000000, currency: 'coins' },   // 12
+    { price: 3000000, currency: 'coins' },   // 13
+    { price: 5000000, currency: 'coins' },   // 14
+    { price: 500, currency: 'emeralds' },    // 15
+  ];
+
+  for (let i = 0; i < pricing.length; i++) {
+    const plotIndex = i + 2; // plots 2..15
+    const item = pricing[i];
+    plots.push(createFarmPlot(`plot-${plotIndex}`, false, item.price, item.currency));
   }
   
   return plots;
@@ -746,10 +763,18 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Farm actions
   unlockPlot: (plotId: string) => {
-    const { farmPlots, user } = get();
+    const { farmPlots, user, showToast } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
-    if (plot && !plot.isUnlocked && user.coins >= plot.unlockPrice) {
+    if (!plot || plot.isUnlocked) return;
+    const payWithEmeralds = plot.unlockCurrency === 'emeralds';
+    const canPay = payWithEmeralds ? user.emeralds >= plot.unlockPrice : user.coins >= plot.unlockPrice;
+    if (!canPay) {
+      showToast('Недостатньо ресурсів', 'warning');
+      return;
+    }
+
+    if (plot) {
       const updatedPlots = farmPlots.map(p => 
         p.id === plotId 
           ? { ...p, isUnlocked: true }
@@ -760,7 +785,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         farmPlots: updatedPlots,
         user: {
           ...user,
-          coins: user.coins - plot.unlockPrice,
+          coins: payWithEmeralds ? user.coins : user.coins - (plot.unlockPrice),
+          emeralds: payWithEmeralds ? user.emeralds - plot.unlockPrice : user.emeralds,
         },
       });
       
@@ -1177,21 +1203,53 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             if (typeof migratedWarehouse[k] !== 'number') migratedWarehouse[k] = 0;
           });
 
-          // Migrate farm plots
+          // Migrate farm plots (plant types + new pricing/currency for locked plots)
+          const pricing: Array<{ price: number; currency: 'coins' | 'emeralds' }> = [
+            { price: 1000, currency: 'coins' },      // 2
+            { price: 3000, currency: 'coins' },      // 3
+            { price: 10000, currency: 'coins' },     // 4
+            { price: 50, currency: 'emeralds' },     // 5
+            { price: 20000, currency: 'coins' },     // 6
+            { price: 50000, currency: 'coins' },     // 7
+            { price: 100000, currency: 'coins' },    // 8
+            { price: 300000, currency: 'coins' },    // 9
+            { price: 200, currency: 'emeralds' },    // 10
+            { price: 500000, currency: 'coins' },    // 11
+            { price: 1000000, currency: 'coins' },   // 12
+            { price: 3000000, currency: 'coins' },   // 13
+            { price: 5000000, currency: 'coins' },   // 14
+            { price: 500, currency: 'emeralds' },    // 15
+          ];
+
           const migratedPlots = Array.isArray(savedState.farmPlots)
             ? savedState.farmPlots.map((p: FarmPlot) => {
-                if (!p || !p.plant) return p;
-                const newType = mapType(p.plant.type);
-                if (!newType) {
-                  return { ...p, plant: null };
+                if (!p) return p;
+                let updated: FarmPlot = { ...p };
+
+                // Update plant mapping if present
+                if (p.plant) {
+                  const newType = mapType(p.plant.type);
+                  if (!newType) {
+                    updated.plant = null;
+                  } else {
+                    const pd = PLANT_DATA[newType];
+                    const timeLeft = Math.min(p.plant.timeLeft ?? pd.growTime, pd.growTime);
+                    updated.plant = { ...p.plant, type: newType, totalTime: pd.growTime, timeLeft };
+                  }
                 }
-                // Also fix times based on new plant if needed
-                const pd = PLANT_DATA[newType];
-                const timeLeft = Math.min(p.plant.timeLeft ?? pd.growTime, pd.growTime);
-                return {
-                  ...p,
-                  plant: { ...p.plant, type: newType, totalTime: pd.growTime, timeLeft },
-                };
+
+                // Enforce new pricing for locked plots by id index
+                const match = /plot-(\d+)/.exec(p.id || '');
+                const idx = match ? parseInt(match[1], 10) : NaN;
+                if (!updated.isUnlocked && !isNaN(idx) && idx >= 2 && idx <= 15) {
+                  const priceItem = pricing[idx - 2];
+                  if (priceItem) {
+                    updated.unlockPrice = priceItem.price;
+                    (updated as any).unlockCurrency = priceItem.currency;
+                  }
+                }
+
+                return updated;
               })
             : currentState.farmPlots;
 
