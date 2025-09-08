@@ -1224,7 +1224,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           const migratedPlots = Array.isArray(savedState.farmPlots)
             ? savedState.farmPlots.map((p: FarmPlot) => {
                 if (!p) return p;
-                let updated: FarmPlot = { ...p };
+                const updated: FarmPlot = { ...p };
 
                 // Update plant mapping if present
                 if (p.plant) {
@@ -1245,7 +1245,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
                   const priceItem = pricing[idx - 2];
                   if (priceItem) {
                     updated.unlockPrice = priceItem.price;
-                    (updated as any).unlockCurrency = priceItem.currency;
+                    updated.unlockCurrency = priceItem.currency;
                   }
                 }
 
