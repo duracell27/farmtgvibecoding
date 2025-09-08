@@ -26,6 +26,8 @@ export const Farm = () => {
     toastMessage,
     toastType,
     clearToast,
+    getCoinBonusPercentage,
+    getExperienceBonusPercentage,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,6 +35,7 @@ export const Farm = () => {
   const [clickedPlantId, setClickedPlantId] = useState<string | null>(null);
   const [, setCooldownUpdate] = useState(0);
   const [clearConfirmPlotId, setClearConfirmPlotId] = useState<string | null>(null);
+  const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
 
   // Update cooldown display every second
   useEffect(() => {
@@ -257,6 +260,26 @@ export const Farm = () => {
                 </>
               )}
             </button>
+          </div>
+        </div>
+
+        {/* Bonus Bar */}
+        <div className="mt-4 flex justify-end">
+          <div 
+            className="bg-gradient-to-r from-green-400 to-green-600 rounded-lg px-2 py-1 cursor-pointer hover:from-green-500 hover:to-green-700 transition-all duration-200 shadow-md"
+            onClick={() => setIsBonusModalOpen(true)}
+          >
+            <div className="flex items-center space-x-1 text-white">
+              <div className="flex items-center ">
+                <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" />
+                <span className="font-bold text-base">+{getCoinBonusPercentage()}%</span>
+              </div>
+              <div className="flex items-center ">
+                <Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-5 h-5 object-contain" />
+                <span className="font-bold text-base">+{getExperienceBonusPercentage()}%</span>
+              </div>
+              
+            </div>
           </div>
         </div>
       </div>
@@ -494,15 +517,15 @@ export const Farm = () => {
                   {!plot.isUnlocked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60">
                       <div className="text-center text-white">
-                        {user.coins >= plot.unlockPrice ? (
+                        {(plot.unlockCurrency === 'emeralds' ? user.emeralds >= plot.unlockPrice : user.coins >= plot.unlockPrice) ? (
                           <>
                             <div className="text-lg font-medium">🛒</div>
                             <div className="text-sm font-bold flex items-center space-x-1 justify-center">
                               <span>{plot.unlockPrice}</span>
                               {plot.unlockCurrency === 'emeralds' ? (
-                                <Image src="/images/смарагд.png" alt="Смарагд" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                               ) : (
-                                <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" />
                               )}
                             </div>
                             <div className="text-xs text-green-300 font-medium">Купити</div>
@@ -513,18 +536,18 @@ export const Farm = () => {
                             <div className="text-sm font-bold flex items-center space-x-1 justify-center">
                               <span>{plot.unlockPrice}</span>
                               {plot.unlockCurrency === 'emeralds' ? (
-                                <Image src="/images/смарагд.png" alt="Смарагд" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                               ) : (
-                                <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" />
                               )}
                             </div>
                             <div className="text-xs text-red-300 font-medium">
                               <span className="flex items-center justify-center space-x-1">
                                 <span>Потрібно: {plot.unlockCurrency === 'emeralds' ? Math.max(0, plot.unlockPrice - user.emeralds) : Math.max(0, plot.unlockPrice - user.coins)}</span>
                                 {plot.unlockCurrency === 'emeralds' ? (
-                                  <Image src="/images/смарагд.png" alt="Смарагд" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                  <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                                 ) : (
-                                  <Image src="/images/монета.png" alt="Монети" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                  <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" />
                                 )}
                               </span>
                             </div>
@@ -646,6 +669,47 @@ export const Farm = () => {
                   Очистити
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bonus Explanation Modal */}
+      {isBonusModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎯</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Бонуси до монет та досвіду</h3>
+              
+              <div className="space-y-4 text-left">
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain" />
+                    <span className="font-semibold text-gray-800">Бонус до монет: +{getCoinBonusPercentage()}%</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    За кожен рівень досягнення ви отримуєте +1% до всіх монет від збору урожаю та продажу. Наприклад: Клікер 2-й рівень + Полив 3-й рівень = +5% бонус.
+                  </p>
+                </div>
+                
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-5 h-5 object-contain" />
+                    <span className="font-semibold text-gray-800">Бонус до досвіду: +{getExperienceBonusPercentage()}%</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    За кожен рівень (починаючи з 2-го) ви отримуєте +1% до всього досвіду від збору урожаю, поливу та добрив.
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setIsBonusModalOpen(false)}
+                className="mt-6 w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
+              >
+                Зрозуміло
+              </button>
             </div>
           </div>
         </div>

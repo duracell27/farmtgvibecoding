@@ -340,6 +340,22 @@ const calculateLevelReward = (level: number): number => {
   return Math.floor(10 * Math.pow(1.40, level - 1));
 };
 
+// Helper function to calculate coin bonus percentage based on achievements
+const calculateCoinBonusPercentage = (achievements: Achievement[]): number => {
+  const totalLevels = achievements.reduce((sum, achievement) => {
+    return sum + achievement.claimedLevels.length;
+  }, 0);
+  
+  // Each achievement level = 1% bonus
+  return totalLevels;
+};
+
+// Helper function to calculate experience bonus percentage based on level
+const calculateExperienceBonusPercentage = (level: number): number => {
+  // Each level = 1% bonus, starting from level 2
+  return Math.max(0, level - 1);
+};
+
 // Helper function to get newly unlocked plant type for a level
 const getNewlyUnlockedPlant = (newLevel: number): PlantType | null => {
   const plantEntries = Object.entries(PLANT_DATA) as [PlantType, PlantData][];
@@ -405,7 +421,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     resetAt: (() => {
       const now = new Date();
       const reset = new Date(now);
-      reset.setHours(24, 0, 0, 0); // next midnight
+      reset.setHours(0, 0, 0, 0); // today midnight
+      reset.setDate(reset.getDate() + 1); // next midnight
       return reset.getTime();
     })(),
   },
@@ -448,7 +465,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast, calculateBonusExperience } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -457,8 +474,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
       const plantData = PLANT_DATA[plot.plant.type];
       
-      // Calculate new level progression
-      const levelProgression = calculateLevelProgression(user.level, user.experience, plantData.experience);
+      // Calculate bonus experience
+      const bonusExperience = calculateBonusExperience(plantData.experience);
+      const totalExperience = plantData.experience + bonusExperience;
+      
+      // Calculate new level progression with bonus experience
+      const levelProgression = calculateLevelProgression(user.level, user.experience, totalExperience);
       
       // Check if user leveled up
       const leveledUp = levelProgression.level > user.level;
@@ -584,7 +605,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   waterPlant: (plotId: string) => {
-    const { farmPlots, user, addExperience, harvestPlant } = get();
+    const { farmPlots, user, addExperience, harvestPlant, calculateBonusExperience } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (!plot || !plot.plant || plot.plant.isReady) return;
@@ -628,8 +649,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       user: newUser,
     });
     
-    // Add experience
-    addExperience(WATERING_EXPERIENCE);
+    // Add experience with bonus
+    const bonusExperience = calculateBonusExperience(WATERING_EXPERIENCE);
+    addExperience(WATERING_EXPERIENCE + bonusExperience);
     
     // If plant is ready after watering, harvest it immediately
     if (newTimeLeft === 0) {
@@ -715,12 +737,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
 
   // Warehouse actions
   sellProduct: (product: keyof Warehouse, amount: number) => {
-    const { warehouse, user } = get();
+    const { warehouse, user, calculateBonusCoins } = get();
     if (warehouse[product] >= amount) {
       // Find the plant data to get sell price
       const plantType = product as PlantType;
       const plantData = PLANT_DATA[plantType];
-      const totalCoins = plantData.sellPrice * amount;
+      const baseCoins = plantData.sellPrice * amount;
+      const bonusCoins = calculateBonusCoins(baseCoins);
+      const totalCoins = baseCoins + bonusCoins;
       
       // Update warehouse and coins at once to prevent flickering
       set({
@@ -809,7 +833,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   applyFertilizer: (plotId: string, fertilizerType: FertilizerType) => {
-    const { farmPlots, user, addExperience } = get();
+    const { farmPlots, user, addExperience, calculateBonusExperience } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     const fertilizerData = FERTILIZER_DATA[fertilizerType];
     
@@ -850,8 +874,9 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         },
       });
       
-      // Add experience for using fertilizer
-      addExperience(fertilizerData.experience);
+      // Add experience for using fertilizer with bonus
+      const bonusExperience = calculateBonusExperience(fertilizerData.experience);
+      addExperience(fertilizerData.experience + bonusExperience);
       
       // Update achievements after using fertilizer
       setTimeout(() => get().updateAchievements(), 0);
@@ -942,7 +967,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const now = Date.now();
     if (now >= exchange.resetAt) {
       const nextReset = new Date();
-      nextReset.setHours(24, 0, 0, 0);
+      nextReset.setHours(0, 0, 0, 0); // today midnight
+      nextReset.setDate(nextReset.getDate() + 1); // next midnight
       exchange.usedToday = 0;
       exchange.resetAt = nextReset.getTime();
     }
@@ -983,6 +1009,20 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   exchangeMaxToday: () => {
     const { user, getExchangeRemainingToday, exchange, showToast } = get();
     const COINS_PER_EMERALD = 1000;
+    
+    // Reset at midnight if needed
+    const now = Date.now();
+    let currentExchange = exchange;
+    if (now >= exchange.resetAt) {
+      const nextReset = new Date();
+      nextReset.setHours(0, 0, 0, 0); // today midnight
+      nextReset.setDate(nextReset.getDate() + 1); // next midnight
+      currentExchange = {
+        usedToday: 0,
+        resetAt: nextReset.getTime(),
+      };
+    }
+    
     const remaining = getExchangeRemainingToday();
     if (remaining <= 0) {
       showToast('Ліміт на сьогодні вичерпано', 'warning');
@@ -996,7 +1036,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     }
     set({
       user: { ...user, coins: user.coins - toExchange * COINS_PER_EMERALD, emeralds: user.emeralds + toExchange },
-      exchange: { ...exchange, usedToday: exchange.usedToday + toExchange },
+      exchange: { ...currentExchange, usedToday: currentExchange.usedToday + toExchange },
     });
     showToast(`Обміняно ${toExchange} смарагдів`, 'info');
   },
@@ -1009,6 +1049,29 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     }
     const dailyLimit = user.level;
     return Math.max(0, dailyLimit - exchange.usedToday);
+  },
+
+  // Bonus calculation actions
+  getCoinBonusPercentage: () => {
+    const { achievements } = get();
+    return calculateCoinBonusPercentage(achievements);
+  },
+
+  getExperienceBonusPercentage: () => {
+    const { user } = get();
+    return calculateExperienceBonusPercentage(user.level);
+  },
+
+  calculateBonusCoins: (baseCoins: number) => {
+    const { achievements } = get();
+    const bonusPercentage = calculateCoinBonusPercentage(achievements);
+    return Math.floor(baseCoins * (bonusPercentage / 100));
+  },
+
+  calculateBonusExperience: (baseExperience: number) => {
+    const { user } = get();
+    const bonusPercentage = calculateExperienceBonusPercentage(user.level);
+    return Math.floor(baseExperience * (bonusPercentage / 100));
   },
 
   // Achievement actions
@@ -1281,11 +1344,25 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             mergedUser.emeralds = 10;
           }
 
+          // Check and reset exchange daily limit if needed
+          let exchangeState = savedState.exchange || { usedToday: 0, resetAt: Date.now() + 24 * 60 * 60 * 1000 };
+          const now = Date.now();
+          if (now >= exchangeState.resetAt) {
+            const nextReset = new Date();
+            nextReset.setHours(0, 0, 0, 0); // today midnight
+            nextReset.setDate(nextReset.getDate() + 1); // next midnight
+            exchangeState = {
+              usedToday: 0,
+              resetAt: nextReset.getTime(),
+            };
+          }
+
           set({
             user: mergedUser,
             warehouse: migratedWarehouse,
             farmPlots: migratedPlots,
             achievements: mergedAchievements,
+            exchange: exchangeState,
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
             selectedPlantType: migratedSelectedPlant || currentState.selectedPlantType,

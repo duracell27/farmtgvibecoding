@@ -192,4 +192,10 @@ export interface GameActions {
   exchangeCoinsForEmeraldsByCoins: (coinsAmount: number) => void;
   exchangeMaxToday: () => void;
   getExchangeRemainingToday: () => number;
+
+  // Bonus calculation actions
+  getCoinBonusPercentage: () => number;
+  getExperienceBonusPercentage: () => number;
+  calculateBonusCoins: (baseCoins: number) => number;
+  calculateBonusExperience: (baseExperience: number) => number;
 }

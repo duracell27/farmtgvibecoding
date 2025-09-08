@@ -58,7 +58,7 @@ export default function ExchangePage() {
           <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
         </div>
           <div className="text-sm">Ліміт на сьогодні: <span className="font-semibold">{remainingToday}</span> / {user.level}</div>
-          <div className="text-sm">Наступний обмін через<span className="font-semibold">00:00</span> (через {formatCountdown(countdown)})</div>
+          <div className="text-sm">Наступний обмін (через {formatCountdown(countdown)})</div>
 
           <div className="flex items-center space-x-2">
             <input

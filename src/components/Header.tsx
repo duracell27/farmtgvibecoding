@@ -111,7 +111,7 @@ export const Header = () => {
             
             {/* User name */}
             <div>
-              <h1 className="text-lg font-bold">
+              <h1 className="text-lg font-bold leading-4">
                 {user.firstName} {user.lastName && user.lastName.trim()}
               </h1>
               {user.username && (
@@ -122,11 +122,11 @@ export const Header = () => {
           
           <div className="text-right">
             <div className="flex items-center justify-end space-x-1">
-              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-1">
+              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-2 pr-1">
                 <span className="text-lg font-bold">{user.coins}</span>
                 <Image src="/images/монета.png" alt="Монети" width={24} height={24} className="w-6 h-6 object-contain" />
               </div>
-              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-1">
+              <div className="flex items-center whitespace-nowrap bg-green-500 rounded-full pl-2 pr-1">
                 <span className="text-lg font-bold">{user.emeralds}</span>
                 <Image src="/images/смарагд.png" alt="Смарагд" width={24} height={24} className="w-6 h-6 object-contain" />
               </div>
@@ -167,7 +167,7 @@ export const Header = () => {
         </div>
 
         {/* Level and experience */}
-        <div className="space-y-2">
+        <div className="space-y-0">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Рівень {user.level}</span>
             <span className="text-sm text-green-100 inline-flex items-center space-x-1">
@@ -179,11 +179,17 @@ export const Header = () => {
           </div>
           
           {/* Progress bar */}
-          <div className="w-full bg-green-800 rounded-full h-2">
-            <div
-              className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
+          <div className="flex items-center space-x-2">
+            <div className="flex-1 bg-green-800 rounded-full h-2 relative">
+              <div
+                className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${getProgressPercentage()}%` }}
+              />
+            </div>
+            {/* Progress percentage badge */}
+            <div className="bg-yellow-400 text-green-800 text-xs font-bold px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+              {Math.round(getProgressPercentage())}%
+            </div>
           </div>
         </div>
       </div>
