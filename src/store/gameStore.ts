@@ -426,6 +426,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       return reset.getTime();
     })(),
   },
+  dailyGreetingModal: {
+    isOpen: false,
+    giftCoins: 0,
+    giftEmeralds: 0,
+  },
 
   // Plant actions
   createNewPlant: () => {
@@ -1454,6 +1459,61 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         newLevel: 1,
         newPlantType: null,
         rewardCoins: 0,
+      },
+    });
+  },
+
+  // Daily greeting actions
+  checkDailyGift: () => {
+    const { user } = get();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Check if user already received gift today
+    if (user.lastDailyGiftDate === today) {
+      return;
+    }
+    
+    // Calculate daily gift
+    const giftCoins = Math.max(user.level * 100, Math.floor(user.coins * 0.01));
+    const giftEmeralds = 3;
+    
+    // Show greeting modal
+    set({
+      dailyGreetingModal: {
+        isOpen: true,
+        giftCoins,
+        giftEmeralds,
+      },
+    });
+  },
+
+  claimDailyGift: () => {
+    const { user, dailyGreetingModal } = get();
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (dailyGreetingModal.isOpen) {
+      set({
+        user: {
+          ...user,
+          coins: user.coins + dailyGreetingModal.giftCoins,
+          emeralds: user.emeralds + dailyGreetingModal.giftEmeralds,
+          lastDailyGiftDate: today,
+        },
+        dailyGreetingModal: {
+          isOpen: false,
+          giftCoins: 0,
+          giftEmeralds: 0,
+        },
+      });
+    }
+  },
+
+  closeDailyGreetingModal: () => {
+    set({
+      dailyGreetingModal: {
+        isOpen: false,
+        giftCoins: 0,
+        giftEmeralds: 0,
       },
     });
   },

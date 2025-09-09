@@ -72,6 +72,7 @@ export interface User {
   totalHarvests: number;
   totalWaterings: number;
   totalFertilizers: number;
+  lastDailyGiftDate?: string; // YYYY-MM-DD format
 }
 
 export type RatingType = 'level' | 'harvests' | 'clicks';
@@ -128,6 +129,12 @@ export interface GameState {
   exchange: {
     usedToday: number; // emeralds exchanged today
     resetAt: number;   // timestamp for next reset (midnight)
+  };
+  // Daily greeting modal
+  dailyGreetingModal: {
+    isOpen: boolean;
+    giftCoins: number;
+    giftEmeralds: number;
   };
 }
 
@@ -198,4 +205,9 @@ export interface GameActions {
   getExperienceBonusPercentage: () => number;
   calculateBonusCoins: (baseCoins: number) => number;
   calculateBonusExperience: (baseExperience: number) => number;
+
+  // Daily greeting actions
+  checkDailyGift: () => void;
+  claimDailyGift: () => void;
+  closeDailyGreetingModal: () => void;
 }

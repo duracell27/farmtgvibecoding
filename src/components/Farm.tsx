@@ -28,6 +28,10 @@ export const Farm = () => {
     clearToast,
     getCoinBonusPercentage,
     getExperienceBonusPercentage,
+    dailyGreetingModal,
+    claimDailyGift,
+    closeDailyGreetingModal,
+    checkDailyGift,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,6 +49,11 @@ export const Farm = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Check for daily gift on component mount
+  useEffect(() => {
+    checkDailyGift();
+  }, [checkDailyGift]);
 
   const handlePlotClick = (plotId: string) => {
     const plot = farmPlots.find((p) => p.id === plotId);
@@ -710,6 +719,50 @@ export const Farm = () => {
               >
                 Зрозуміло
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Greeting Modal */}
+      {dailyGreetingModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Доброго ранку!</h3>
+              <p className="text-gray-600 mb-6">Ваш щоденний подарунок готовий!</p>
+              
+              <div className="space-y-4">
+                <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200">
+                  <div className="flex items-center justify-center space-x-3">
+                    <Image src="/images/монета.png" alt="Монети" width={32} height={32} className="w-8 h-8 object-contain" />
+                    <div>
+                      <div className="text-2xl font-bold text-yellow-600">+{dailyGreetingModal.giftCoins}</div>
+                      <div className="text-sm text-gray-600">монет</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                  <div className="flex items-center justify-center space-x-3">
+                    <Image src="/images/смарагд.png" alt="Смарагди" width={32} height={32} className="w-8 h-8 object-contain" />
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">+{dailyGreetingModal.giftEmeralds}</div>
+                      <div className="text-sm text-gray-600">смарагдів</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button
+                  onClick={claimDailyGift}
+                  className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 font-semibold text-lg"
+                >
+                  Забрати подарунок
+                </button>
+              </div>
             </div>
           </div>
         </div>
