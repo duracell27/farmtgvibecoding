@@ -1515,6 +1515,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           giftEmeralds: 0,
         },
       });
+
+      // Persist lastDailyGiftDate to server
+      setTimeout(() => {
+        get().saveGameState();
+      }, 0);
     }
   },
 

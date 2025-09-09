@@ -12,6 +12,7 @@ export const Farm = () => {
   const {
     farmPlots,
     user,
+    initialSyncDone,
     selectedPlantType,
     selectedFertilizerType,
     clickPlant,
@@ -49,10 +50,12 @@ export const Farm = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Check for daily gift on component mount
+  // Check for daily gift only after game state is loaded
   useEffect(() => {
-    checkDailyGift();
-  }, [checkDailyGift]);
+    if (initialSyncDone) {
+      checkDailyGift();
+    }
+  }, [initialSyncDone, checkDailyGift]);
 
   const handlePlotClick = (plotId: string) => {
     const plot = farmPlots.find((p) => p.id === plotId);
