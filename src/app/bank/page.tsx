@@ -51,38 +51,35 @@ export default function BankPage() {
     try {
       // Check if we're in Telegram WebApp
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp as unknown as TelegramWebAppLite;
-        
-        // Show invoice for Telegram Stars
-        tg.showPopup({
-          title: `Купити ${selectedPkg.name}`,
-          message: `Ви хочете купити ${selectedPkg.name} за ${selectedPkg.price} ⭐?`,
-          buttons: [
-            {
-              id: 'confirm',
-              type: 'default',
-              text: 'Підтвердити покупку'
-            },
-            {
-              id: 'cancel',
-              type: 'cancel',
-              text: 'Скасувати'
-            }
-          ]
-        }, (buttonId: string) => {
-          if (buttonId === 'confirm') {
-            // In real implementation, this would call Telegram's payment API
-            // For now, we'll simulate the purchase
-            if (selectedPkg.coins > 0) {
-              addCoins(selectedPkg.coins);
-            }
-            if (selectedPkg.emeralds > 0) {
-              addEmeralds(selectedPkg.emeralds);
-            }
-            
-            tg.showAlert(`Покупка успішна! Отримано: ${selectedPkg.coins > 0 ? selectedPkg.coins + ' монет' : selectedPkg.emeralds + ' смарагдів'}`);
-          }
+        const tg = window.Telegram.WebApp as unknown as TelegramWebAppLite & { openInvoice?: (url: string, cb?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void) => void };
+
+        // Create invoice via our API (amount in Stars)
+        const resp = await fetch('/api/payments/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: selectedPkg.name,
+            description: selectedPkg.name,
+            amountStars: selectedPkg.price,
+            payload: packageId,
+          }),
         });
+        const data = await resp.json();
+        if (!data.success || !data.invoiceUrl) {
+          throw new Error(data.error || 'Не вдалося створити інвойс');
+        }
+
+        if (typeof tg.openInvoice === 'function') {
+          tg.openInvoice(data.invoiceUrl, (status) => {
+            if (status === 'paid') {
+              if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
+              if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
+            }
+          });
+        } else {
+          // Fallback: open link
+          window.open(data.invoiceUrl, '_blank');
+        }
       } else {
         // Fallback for development/testing
         if (selectedPkg.coins > 0) {
