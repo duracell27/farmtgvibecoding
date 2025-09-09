@@ -724,6 +724,16 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     });
   },
 
+  addEmeralds: (amount: number) => {
+    const { user } = get();
+    set({
+      user: {
+        ...user,
+        emeralds: user.emeralds + amount,
+      },
+    });
+  },
+
   levelUp: () => {
     const { user } = get();
     

@@ -1,0 +1,251 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useGameStore } from "@/store/gameStore";
+import "@/types/telegram";
+
+interface TelegramWebAppLite {
+  showPopup: (
+    params: {
+      title?: string;
+      message: string;
+      buttons?: Array<{
+        id?: string;
+        type?: 'default' | 'ok' | 'close' | 'cancel' | 'destructive';
+        text?: string;
+      }>;
+    },
+    callback?: (buttonId: string) => void
+  ) => void;
+  showAlert: (message: string, callback?: () => void) => void;
+}
+
+export default function BankPage() {
+  const { user, addCoins, addEmeralds } = useGameStore();
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+
+  // Bank packages for coins and emeralds
+  const coinPackages = [
+    { id: 'coins-10000', name: '10,000 монет', price: 1, coins: 10000, emeralds: 0, popular: false },
+    { id: 'coins-50000', name: '50,000 монет', price: 3, coins: 50000, emeralds: 0, popular: false },
+    { id: 'coins-100000', name: '100,000 монет', price: 5, coins: 100000, emeralds: 0, popular: true },
+    { id: 'coins-500000', name: '500,000 монет', price: 10, coins: 500000, emeralds: 0, popular: false },
+  ];
+
+  const emeraldPackages = [
+    { id: 'emeralds-100', name: '100 смарагдів', price: 1, coins: 0, emeralds: 100, popular: false },
+    { id: 'emeralds-220', name: '200 смарагдів + 20 в подарунок', price: 2, coins: 0, emeralds: 220, popular: false },
+    { id: 'emeralds-550', name: '500 смарагдів + 50 в подарунок', price: 5, coins: 0, emeralds: 550, popular: true },
+    { id: 'emeralds-1150', name: '1,000 смарагдів + 150 в подарунок', price: 10, coins: 0, emeralds: 1150, popular: false },
+    { id: 'emeralds-2750', name: '2,500 смарагдів + 250 в подарунок', price: 20, coins: 0, emeralds: 2750, popular: false },
+  ];
+
+  const handlePurchase = async (packageId: string) => {
+    const allPackages = [...coinPackages, ...emeraldPackages];
+    const selectedPkg = allPackages.find(pkg => pkg.id === packageId);
+    
+    if (!selectedPkg) return;
+
+    try {
+      // Check if we're in Telegram WebApp
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp as unknown as TelegramWebAppLite;
+        
+        // Show invoice for Telegram Stars
+        tg.showPopup({
+          title: `Купити ${selectedPkg.name}`,
+          message: `Ви хочете купити ${selectedPkg.name} за ${selectedPkg.price} ⭐?`,
+          buttons: [
+            {
+              id: 'confirm',
+              type: 'default',
+              text: 'Підтвердити покупку'
+            },
+            {
+              id: 'cancel',
+              type: 'cancel',
+              text: 'Скасувати'
+            }
+          ]
+        }, (buttonId: string) => {
+          if (buttonId === 'confirm') {
+            // In real implementation, this would call Telegram's payment API
+            // For now, we'll simulate the purchase
+            if (selectedPkg.coins > 0) {
+              addCoins(selectedPkg.coins);
+            }
+            if (selectedPkg.emeralds > 0) {
+              addEmeralds(selectedPkg.emeralds);
+            }
+            
+            tg.showAlert(`Покупка успішна! Отримано: ${selectedPkg.coins > 0 ? selectedPkg.coins + ' монет' : selectedPkg.emeralds + ' смарагдів'}`);
+          }
+        });
+      } else {
+        // Fallback for development/testing
+        if (selectedPkg.coins > 0) {
+          addCoins(selectedPkg.coins);
+        }
+        if (selectedPkg.emeralds > 0) {
+          addEmeralds(selectedPkg.emeralds);
+        }
+        alert(`Покупка успішна! Отримано: ${selectedPkg.coins > 0 ? selectedPkg.coins + ' монет' : selectedPkg.emeralds + ' смарагдів'}`);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Помилка при обробці платежу. Спробуйте ще раз.');
+    }
+  };
+
+  return (
+    <div className="py-4 px-1 max-w-sm mx-auto">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <div className="text-4xl mb-2">🏦</div>
+        <h1 className="text-2xl font-bold text-gray-800">Банк</h1>
+        <p className="text-gray-600">Купуйте монети та смарагди</p>
+        <div className="mt-2 text-sm text-blue-600 flex items-center justify-center space-x-1">
+          <span>⭐</span>
+          <span>Оплата через Telegram Stars</span>
+        </div>
+      </div>
+
+      {/* Current Balance */}
+      <div className="bg-white rounded-lg p-4 mb-6 shadow-md">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Ваш баланс</h2>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Image src="/images/монета.png" alt="Монети" width={24} height={24} className="w-6 h-6 object-contain" />
+            <span className="text-lg font-bold text-yellow-600">{user.coins.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Image src="/images/смарагд.png" alt="Смарагди" width={24} height={24} className="w-6 h-6 object-contain" />
+            <span className="text-lg font-bold text-green-600">{user.emeralds.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Emerald Packages */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+          <Image src="/images/смарагд.png" alt="Смарагди" width={20} height={20} className="w-5 h-5 object-contain mr-2" />
+          Смарагди
+        </h2>
+        <div className="space-y-2">
+          {emeraldPackages.map((pkg) => (
+            <div
+              key={pkg.id}
+              className={`bg-white rounded-lg p-4 shadow-md border-2 transition-all duration-200 ${
+                selectedPackage === pkg.id 
+                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-400' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setSelectedPackage(pkg.id)}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Image src="/images/смарагд.png" alt="Смарагди" width={32} height={32} className="w-8 h-8 object-contain" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-green-600 mb-1">
+                      {pkg.id === 'emeralds-220' ? '220' :
+                       pkg.id === 'emeralds-550' ? '550' :
+                       pkg.id === 'emeralds-1150' ? '1,150' :
+                       pkg.id === 'emeralds-2750' ? '2,750' :
+                       pkg.emeralds.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">{pkg.name}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center justify-end space-x-1">
+                    {pkg.popular && (
+                      <span className="bg-green-400 text-green-800 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                        популярне
+                      </span>
+                    )}
+                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price} $</div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePurchase(pkg.id);
+                    }}
+                    className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm font-semibold"
+                  >
+                    Купити
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Coin Packages */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+          <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-5 h-5 object-contain mr-2" />
+          Монети
+        </h2>
+        <div className="space-y-2">
+          {coinPackages.map((pkg) => (
+            <div
+              key={pkg.id}
+              className={`bg-white rounded-lg p-4 shadow-md border-2 transition-all duration-200 ${
+                selectedPackage === pkg.id 
+                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-400' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setSelectedPackage(pkg.id)}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Image src="/images/монета.png" alt="Монети" width={32} height={32} className="w-8 h-8 object-contain" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-yellow-600 mb-1">
+                      {pkg.coins.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">{pkg.name}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center justify-end space-x-1">
+                    {pkg.popular && (
+                      <span className="bg-yellow-400 text-yellow-800 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                          популярне
+                      </span>
+                    )}
+                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price} $</div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePurchase(pkg.id);
+                    }}
+                    className="mt-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 text-sm font-semibold"
+                  >
+                    Купити
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Back to Farm */}
+      <div className="mt-6">
+        <Link href="/" className="flex bg-gray-700 rounded-lg p-3 space-x-2 text-white hover:bg-gray-800 font-medium justify-center">
+          <span>🏠</span>
+          <span className="text-lg font-bold">Повернутися на ферму</span>
+        </Link>
+      </div>
+    </div>
+  );
+}

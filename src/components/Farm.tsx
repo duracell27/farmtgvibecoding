@@ -607,13 +607,17 @@ export const Farm = () => {
         </div>
       </div>
 
-      {/* Separator and City link */}
+      {/* Separator and City/Bank links */}
       <div className="my-4">
         <div className="border-t border-gray-200" />
-        <div className="mt-3 w-full">
+        <div className="mt-3 space-y-2">
           <Link href="/city" className="flex bg-green-700 rounded-lg p-2 space-x-2 text-white hover:text-green-800 font-medium">
             <Image src="/images/місто.png" alt="Місто" width={20} height={20} className="w-7 h-7 object-contain" />
             <span className="text-xl font-bold">Місто</span>
+          </Link>
+          <Link href="/bank" className="flex bg-blue-700 rounded-lg p-2 space-x-2 text-white hover:text-blue-800 font-medium">
+            <Image src="/images/монета.png" alt="Банк" width={20} height={20} className="w-7 h-7 object-contain" />
+            <span className="text-xl font-bold">Банк</span>
           </Link>
         </div>
       </div>

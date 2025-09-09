@@ -150,6 +150,7 @@ export interface GameActions {
   // User actions
   addExperience: (amount: number) => void;
   addCoins: (amount: number) => void;
+  addEmeralds: (amount: number) => void;
   levelUp: () => void;
   
   // Warehouse actions
