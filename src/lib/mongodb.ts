@@ -1,7 +1,7 @@
 import { MongoClient, Db } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://volodymyrshmidt_db_user:UhhdMBMsJAsUnkO2@cluster0.cs3a9ge.mongodb.net/';
-const MONGODB_DB = process.env.MONGODB_DB || 'farm_game';
+const MONGODB_URI = process.env.MONGODB_URI as string;
+const MONGODB_DB = process.env.MONGODB_DB as string;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');

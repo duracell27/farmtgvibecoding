@@ -66,7 +66,14 @@ export default function BankPage() {
         });
         const data = await resp.json();
         if (!data.success || !data.invoiceUrl) {
-          throw new Error(data.error || 'Не вдалося створити інвойс');
+          const msg = data?.error || 'Не вдалося створити інвойс';
+          if (window.Telegram?.WebApp) {
+            const tgLite = window.Telegram.WebApp as unknown as TelegramWebAppLite;
+            tgLite.showAlert(`Помилка: ${msg}`);
+          } else {
+            alert(`Помилка: ${msg}`);
+          }
+          return;
         }
 
         if (typeof tg.openInvoice === 'function') {

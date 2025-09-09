@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     const data = await tgResponse.json();
     if (!data || !data.ok) {
-      return NextResponse.json({ success: false, error: data?.description || 'Telegram API error' }, { status: 500 });
+      return NextResponse.json({ success: false, error: data?.description || 'Telegram API error', raw: data }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, invoiceUrl: data.result });
