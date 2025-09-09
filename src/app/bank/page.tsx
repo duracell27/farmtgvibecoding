@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useGameStore } from "@/store/gameStore";
-import "@/types/telegram";
+// Telegram WebApp typings are optional at runtime; we'll use a lite interface below
 
 interface TelegramWebAppLite {
   showPopup: (

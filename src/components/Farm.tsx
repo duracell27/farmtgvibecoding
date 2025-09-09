@@ -30,7 +30,6 @@ export const Farm = () => {
     getExperienceBonusPercentage,
     dailyGreetingModal,
     claimDailyGift,
-    closeDailyGreetingModal,
     checkDailyGift,
   } = useGameStore();
 
