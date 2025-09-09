@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    // Support both TELEGRAM_BOT_TOKEN and BOT_TOKEN (as on Vercel env screenshot)
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
     if (!botToken) {
       return NextResponse.json({ success: false, error: 'Missing TELEGRAM_BOT_TOKEN' }, { status: 500 });
     }
