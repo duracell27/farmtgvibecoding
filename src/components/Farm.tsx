@@ -399,7 +399,7 @@ export const Farm = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-gray-800">
-            Грядки: {farmPlots.filter((p) => p.isUnlocked).length}/{farmPlots.length}
+            Грядки: {farmPlots.filter((p) => p.isUnlocked).length}/15
           </h3>
           {(() => {
             const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
@@ -419,7 +419,7 @@ export const Farm = () => {
                 </div>
               );
             }
-            return <div className="text-sm text-green-600">Всі 7 грядок розблоковані! 🎉</div>;
+            return <div className="text-sm text-green-600">Всі 15 грядок розблоковані! 🎉</div>;
           })()}
         </div>
         <div className="grid grid-cols-2 gap-4 rounded-lg p-2">
