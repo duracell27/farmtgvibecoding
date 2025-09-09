@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useGameStore, PLANT_DATA, FERTILIZER_DATA } from "@/store/gameStore";
@@ -13,6 +13,7 @@ export const Farm = () => {
     farmPlots,
     user,
     initialSyncDone,
+    upgrades,
     selectedPlantType,
     selectedFertilizerType,
     clickPlant,
@@ -40,6 +41,80 @@ export const Farm = () => {
   const [, setCooldownUpdate] = useState(0);
   const [clearConfirmPlotId, setClearConfirmPlotId] = useState<string | null>(null);
   const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
+  const [isClickInfoOpen, setIsClickInfoOpen] = useState(false);
+  const bottomActionsRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottomActions = () => {
+    bottomActionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Press-and-hold auto click state
+  const holdIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const holdPlotRef = useRef<string | null>(null);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressActivatedRef = useRef<boolean>(false);
+
+  const triggerClickAnimation = (plotId: string) => {
+    setClickedPlantId(plotId);
+    setTimeout(() => setClickedPlantId(null), 200);
+  };
+
+  const LONG_PRESS_MS = 250;
+
+  const startHoldClicking = (plotId: string) => {
+    // avoid multiple starts
+    if (holdTimeoutRef.current || holdIntervalRef.current) return;
+    holdPlotRef.current = plotId;
+    longPressActivatedRef.current = false;
+
+    holdTimeoutRef.current = setTimeout(() => {
+      // Long press confirmed
+      longPressActivatedRef.current = true;
+      // Start repeating click every 1s with immediate first tick
+      const currentPlotId = holdPlotRef.current;
+      if (!currentPlotId) return;
+      const p = farmPlots.find(p => p.id === currentPlotId);
+      if (!p || !p.plant || isHarvesting) {
+        stopHoldClicking();
+        return;
+      }
+      clickPlant(currentPlotId);
+      triggerClickAnimation(currentPlotId);
+      holdIntervalRef.current = setInterval(() => {
+        const pp = farmPlots.find(px => px.id === currentPlotId);
+        if (!pp || !pp.plant || isHarvesting) {
+          stopHoldClicking();
+          return;
+        }
+        clickPlant(currentPlotId);
+        triggerClickAnimation(currentPlotId);
+      }, 1000);
+    }, LONG_PRESS_MS);
+  };
+
+  const stopHoldClicking = () => {
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current as unknown as number);
+      holdTimeoutRef.current = null;
+    }
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current as unknown as number);
+      holdIntervalRef.current = null;
+    }
+    holdPlotRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => {
+      // cleanup on unmount
+      if (holdIntervalRef.current) {
+        clearInterval(holdIntervalRef.current as unknown as number);
+      }
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current as unknown as number);
+      }
+    };
+  }, []);
 
   // Update cooldown display every second
   useEffect(() => {
@@ -58,6 +133,11 @@ export const Farm = () => {
   }, [initialSyncDone, checkDailyGift]);
 
   const handlePlotClick = (plotId: string) => {
+    // If long press was activated, suppress regular click
+    if (longPressActivatedRef.current) {
+      longPressActivatedRef.current = false;
+      return;
+    }
     const plot = farmPlots.find((p) => p.id === plotId);
 
 
@@ -199,25 +279,34 @@ export const Farm = () => {
       <div className="mb-6">
         <div className="flex items-center justify-evenly mb-4">
           
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 items-center">
+            {/* Menu scroll button */}
+            <button
+              onClick={scrollToBottomActions}
+              className="bg-gray-200 text-gray-800 px-2 py-1 rounded-lg hover:bg-gray-300 transition-colors duration-200 flex items-center"
+              title="Перейти до нижніх кнопок"
+            >
+              <span className="mr-1">☰</span>
+              <span className="text-sm font-medium">Меню</span>
+            </button>
             {/* Plant Selection Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+              className="bg-green-600 text-white px-1 py-1 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
             >
               {selectedPlantType ? (
                 <>
-                  <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                  <div className="w-4 h-4 overflow-hidden flex items-center justify-center">
                     <Image
                       src={PLANT_DATA[selectedPlantType].image}
                       alt={PLANT_DATA[selectedPlantType].name}
-                      width={32}
-                      height={32}
+                      width={16}
+                      height={16}
                       className="w-full h-full object-contain"
                       style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
                     />
                   </div>
-                  <span>{PLANT_DATA[selectedPlantType].name}</span>
+                  <span className="text-sm whitespace-nowrap">{PLANT_DATA[selectedPlantType].name}</span>
                   <span
                     onClick={(e) => {
                       e.stopPropagation();
@@ -239,21 +328,21 @@ export const Farm = () => {
             {/* Fertilizer Selection Button */}
             <button
               onClick={() => setIsFertilizerModalOpen(true)}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2 relative"
+              className="bg-orange-600 text-white px-1 py-1 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2 relative"
             >
               {selectedFertilizerType ? (
                 <>
-                  <div className="w-8 h-8 overflow-hidden flex items-center justify-center">
+                  <div className="w-4 h-4 overflow-hidden flex items-center justify-center">
                     <Image
                       src={FERTILIZER_DATA[selectedFertilizerType].image}
                       alt={FERTILIZER_DATA[selectedFertilizerType].name}
-                      width={32}
-                      height={32}
+                      width={16}
+                      height={16}
                       className="w-full h-full object-contain"
                       style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
                     />
                   </div>
-                  <span>{FERTILIZER_DATA[selectedFertilizerType].name}</span>
+                  <span className="text-sm whitespace-nowrap">{FERTILIZER_DATA[selectedFertilizerType].name}</span>
                   <span
                     onClick={(e) => {
                       e.stopPropagation();
@@ -274,10 +363,22 @@ export const Farm = () => {
           </div>
         </div>
 
-        {/* Bonus Bar */}
-        <div className="mt-4 flex justify-end">
+        {/* Bonus Bar + Click Info (justify-between) */}
+        <div className="mt-4 flex items-center justify-between">
+          {/* Click info standalone button */}
+          <button
+            type="button"
+            onClick={() => setIsClickInfoOpen(true)}
+            className="bg-green-600 text-white rounded-lg px-2 py-1 hover:bg-green-700 transition-colors duration-200 shadow-md flex items-center"
+            title="Клік по рослині скорочує час на 1с"
+          >
+            <span className="mr-1">👆</span>
+            <span className="font-bold whitespace-nowrap">{upgrades?.powerPerClick ?? 1}</span>
+          </button>
+
+          {/* Bonus Bar */}
           <div 
-            className="bg-gradient-to-r from-green-400 to-green-600 rounded-lg px-2 py-1 cursor-pointer hover:from-green-500 hover:to-green-700 transition-all duration-200 shadow-md"
+            className="bg-gradient-to-r from-green-400 to-green-600 rounded-lg px-2 py-1 cursor-pointer hover:from-green-500 hover:to-green-700 transition-all duration-200 shadow-md whitespace-nowrap"
             onClick={() => setIsBonusModalOpen(true)}
           >
             <div className="flex items-center space-x-1 text-white">
@@ -289,7 +390,6 @@ export const Farm = () => {
                 <Image src="/images/досвід.png" alt="Досвід" width={20} height={20} className="w-5 h-5 object-contain" />
                 <span className="font-bold text-base">+{getExperienceBonusPercentage()}%</span>
               </div>
-              
             </div>
           </div>
         </div>
@@ -347,6 +447,11 @@ export const Farm = () => {
                   </div>
                 )}
                 <button
+                  onMouseDown={() => startHoldClicking(plot.id)}
+                  onMouseUp={stopHoldClicking}
+                  onMouseLeave={stopHoldClicking}
+                  onTouchStart={() => startHoldClicking(plot.id)}
+                  onTouchEnd={stopHoldClicking}
                   onClick={() => handlePlotClick(plot.id)}
                   className={`aspect-square w-full rounded-lg transition-all relative overflow-hidden p-0 ${
                     plot.isUnlocked ? "" : "border-2 border-gray-400"
@@ -610,7 +715,7 @@ export const Farm = () => {
       </div>
 
       {/* Separator and City/Bank links */}
-      <div className="my-4">
+      <div className="my-4" ref={bottomActionsRef}>
         <div className="border-t border-gray-200" />
         <div className="mt-3 space-y-2">
           <Link href="/city" className="flex bg-green-700 rounded-lg p-2 space-x-2 text-white hover:text-green-800 font-medium">
@@ -725,6 +830,42 @@ export const Farm = () => {
               >
                 Зрозуміло
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Click Info Modal */}
+      {isClickInfoOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="text-4xl mb-4">👆</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Клік прискорює ріст</h3>
+              <div className="text-left space-y-3 mb-4">
+                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                  <div className="text-sm text-gray-700"><span className="font-semibold">Потужність:</span> {(upgrades?.powerPerClick ?? 1)} с за клік</div>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <div className="text-sm text-gray-700"><span className="font-semibold">Інтенсивність:</span> 1 раз в 1с</div>
+                </div>
+                <p className="text-xs text-gray-500">Це поточні значення. Ви можете покращувати потужність або інтенсивність, виконуючи завдання.</p>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setIsClickInfoOpen(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                >
+                  Закрити
+                </button>
+                <Link
+                  href="/upgrades"
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-center"
+                  onClick={() => setIsClickInfoOpen(false)}
+                >
+                  Покращити
+                </Link>
+              </div>
             </div>
           </div>
         </div>

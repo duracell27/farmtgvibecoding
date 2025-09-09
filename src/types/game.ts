@@ -130,6 +130,19 @@ export interface GameState {
     usedToday: number; // emeralds exchanged today
     resetAt: number;   // timestamp for next reset (midnight)
   };
+  // Upgrades
+  upgrades?: {
+    powerLevel: number;            // 1..8 (base 1 sec per click)
+    powerPerClick: number;         // seconds reduced per click
+    activeTrack?: 'power' | 'intensity' | null; // currently chosen track
+    currentPowerTask?: number;     // 2..8 when active
+    currentPowerPlant?: PlantType | null; // selected random plant for task types
+    progress: {
+      totalWaterings: number;
+      totalFertilizers: number;
+      harvestsByPlant: Record<string, number>; // plantType -> count
+    };
+  };
   // Daily greeting modal
   dailyGreetingModal: {
     isOpen: boolean;
@@ -200,6 +213,10 @@ export interface GameActions {
   exchangeCoinsForEmeraldsByCoins: (coinsAmount: number) => void;
   exchangeMaxToday: () => void;
   getExchangeRemainingToday: () => number;
+
+  // Upgrade actions
+  startPowerTask: () => void; // starts next power task in sequence
+  completePowerTask: () => void; // claim reward and level up power if task complete
 
   // Bonus calculation actions
   getCoinBonusPercentage: () => number;

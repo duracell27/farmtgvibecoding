@@ -28,18 +28,18 @@ export default function BankPage() {
 
   // Bank packages for coins and emeralds
   const coinPackages = [
-    { id: 'coins-10000', name: '10,000 монет', price: 1, coins: 10000, emeralds: 0, popular: false },
-    { id: 'coins-50000', name: '50,000 монет', price: 3, coins: 50000, emeralds: 0, popular: false },
-    { id: 'coins-100000', name: '100,000 монет', price: 5, coins: 100000, emeralds: 0, popular: true },
-    { id: 'coins-500000', name: '500,000 монет', price: 10, coins: 500000, emeralds: 0, popular: false },
+    { id: 'coins-10000', name: '10,000 монет', price: 25, coins: 10000, emeralds: 0, popular: false },
+    { id: 'coins-50000', name: '50,000 монет', price: 50, coins: 50000, emeralds: 0, popular: false },
+    { id: 'coins-100000', name: '100,000 монет', price: 100, coins: 100000, emeralds: 0, popular: true },
+    { id: 'coins-500000', name: '500,000 монет', price: 200, coins: 500000, emeralds: 0, popular: false },
   ];
 
   const emeraldPackages = [
-    { id: 'emeralds-100', name: '100 смарагдів', price: 1, coins: 0, emeralds: 100, popular: false },
-    { id: 'emeralds-220', name: '200 смарагдів + 20 в подарунок', price: 2, coins: 0, emeralds: 220, popular: false },
-    { id: 'emeralds-550', name: '500 смарагдів + 50 в подарунок', price: 5, coins: 0, emeralds: 550, popular: true },
-    { id: 'emeralds-1150', name: '1,000 смарагдів + 150 в подарунок', price: 10, coins: 0, emeralds: 1150, popular: false },
-    { id: 'emeralds-2750', name: '2,500 смарагдів + 250 в подарунок', price: 20, coins: 0, emeralds: 2750, popular: false },
+    { id: 'emeralds-100', name: '100 смарагдів', price: 50, coins: 0, emeralds: 100, popular: false },
+    { id: 'emeralds-220', name: '220 смарагдів', price: 100, coins: 0, emeralds: 220, popular: false },
+    { id: 'emeralds-550', name: '550 смарагдів', price: 250, coins: 0, emeralds: 550, popular: true },
+    { id: 'emeralds-1150', name: '1,150 смарагдів', price: 500, coins: 0, emeralds: 1150, popular: false },
+    { id: 'emeralds-2750', name: '2,750 смарагдів', price: 1200, coins: 0, emeralds: 2750, popular: false },
   ];
 
   const handlePurchase = async (packageId: string) => {
@@ -171,7 +171,7 @@ export default function BankPage() {
                         популярне
                       </span>
                     )}
-                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price} $</div>
+                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price}</div>
                   </div>
                   <button
                     onClick={(e) => {
@@ -225,7 +225,7 @@ export default function BankPage() {
                           популярне
                       </span>
                     )}
-                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price} $</div>
+                    <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price}</div>
                   </div>
                   <button
                     onClick={(e) => {

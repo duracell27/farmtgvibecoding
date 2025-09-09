@@ -25,10 +25,10 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-md w-full border-4 border-yellow-400">
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-2xl max-w-md w-full border-4 border-yellow-400 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 text-center rounded-t-xl">
           <div className="text-6xl mb-2">🎉</div>
@@ -37,7 +37,7 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
         </div>
 
         {/* Content */}
-        <div className="p-6 text-center">
+        <div className="p-6 text-center overflow-y-auto flex-1">
           {/* Reward Coins */}
           <div className="mb-6">
             <div className="bg-yellow-100 rounded-xl p-4 border-2 border-yellow-300">
@@ -94,7 +94,10 @@ export const LevelUpModal = ({ isOpen, onClose, newLevel, newPlantType, rewardCo
             </div>
           )}
 
-          {/* Close Button */}
+        </div>
+
+        {/* Close Button */}
+        <div className="p-6 pt-0">
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"

@@ -431,6 +431,93 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     giftCoins: 0,
     giftEmeralds: 0,
   },
+  upgrades: {
+    powerLevel: 1,
+    powerPerClick: 1,
+    activeTrack: null,
+    currentPowerTask: undefined,
+    currentPowerPlant: null,
+    progress: {
+      totalWaterings: 0,
+      totalFertilizers: 0,
+      harvestsByPlant: {},
+    },
+  },
+
+  // Upgrade actions
+  startPowerTask: () => {
+    const state = get();
+    // Prevent starting while loading or before initial sync
+    if (!state.initialSyncDone || state.syncStatus === 'loading') return;
+    // Prevent duplicate if task already active
+    if (state.upgrades && state.upgrades.activeTrack === 'power' && state.upgrades.currentPowerTask) return;
+    const currentLevel = state.upgrades?.powerLevel || 1;
+    const nextTask = Math.min(currentLevel + 1, 8); // tasks 2..8
+    // Pick random available plant for tasks that require specific plant
+    const availablePlants = Object.entries(PLANT_DATA)
+      .filter(([, pd]) => pd.requiredLevel <= state.user.level)
+      .map(([k]) => k) as PlantType[];
+    const randomPlant = availablePlants.length
+      ? availablePlants[Math.floor(Math.random() * availablePlants.length)]
+      : null;
+
+    const prev = state.upgrades || {
+      powerLevel: 1,
+      powerPerClick: 1,
+      activeTrack: null as 'power' | 'intensity' | null,
+      currentPowerTask: undefined as number | undefined,
+      currentPowerPlant: null as PlantType | null,
+      progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} as Record<string, number> },
+    };
+    set({
+      upgrades: {
+        ...prev,
+        activeTrack: 'power',
+        currentPowerTask: nextTask,
+        currentPowerPlant: randomPlant,
+      },
+    });
+  },
+  completePowerTask: () => {
+    const state = get();
+    const up = state.upgrades;
+    if (!up || up.activeTrack !== 'power' || !up.currentPowerTask) return;
+    const task = up.currentPowerTask;
+    // Determine target and current
+    let current = 0;
+    let target = 0;
+    if (task === 2 || task === 5 || task === 8) {
+      target = task === 2 ? 500 : task === 5 ? 2000 : 5000;
+      const plant = up.currentPowerPlant || '';
+      current = up.progress.harvestsByPlant[plant] || 0;
+    } else if (task === 3 || task === 6) {
+      target = task === 3 ? 1000 : 10000;
+      current = up.progress.totalWaterings;
+    } else if (task === 4 || task === 7) {
+      target = task === 4 ? 2000 : 20000;
+      current = up.progress.totalFertilizers;
+    }
+    if (current < target) return; // not completed yet
+
+    const newLevel = Math.min(8, (up.powerLevel || 1) + 1);
+    const newPower = Math.max(1, (up.powerPerClick || 1) + 1);
+
+    set({
+      upgrades: {
+        ...up,
+        powerLevel: newLevel,
+        powerPerClick: newPower,
+        activeTrack: null,
+        currentPowerTask: undefined,
+        currentPowerPlant: null,
+      },
+    });
+
+    // persist upgrade
+    setTimeout(() => get().saveGameState(), 100);
+    // toast
+    get().showToast(`Потужність підвищено до ${newPower}с/клік!`, 'info');
+  },
 
   // Plant actions
   createNewPlant: () => {
@@ -438,7 +525,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   clickPlant: (plotId: string) => {
-    const { farmPlots, isHarvesting, harvestPlant, user } = get();
+    const { farmPlots, isHarvesting, harvestPlant, user, upgrades } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     // Increment total clicks
@@ -449,7 +536,8 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     
     if (plot && plot.plant && !isHarvesting) {
       if (plot.plant.timeLeft > 0) {
-        const newTimeLeft = Math.max(0, plot.plant.timeLeft - 1);
+        const power = Math.max(1, (upgrades?.powerPerClick as number) || 1);
+        const newTimeLeft = Math.max(0, plot.plant.timeLeft - power);
         const updatedPlots = farmPlots.map(p => 
           p.id === plotId 
             ? { ...p, plant: { ...p.plant!, timeLeft: newTimeLeft, isReady: newTimeLeft === 0 } }
@@ -470,7 +558,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast, calculateBonusExperience } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast, calculateBonusExperience, upgrades } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -550,6 +638,28 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         farmPlots: updatedPlots,
         isHarvesting: false,
       });
+
+      // Update upgrades progress for harvest-by-plant
+      set((state) => {
+        const up = state.upgrades || {
+          powerLevel: 1,
+          powerPerClick: 1,
+          activeTrack: null,
+          currentPowerTask: undefined,
+          currentPowerPlant: null,
+          progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+        };
+        const plantType = plot.plant ? plot.plant.type : null;
+        if (plantType) {
+          const current = up.progress.harvestsByPlant[plantType] || 0;
+          up.progress.harvestsByPlant[plantType] = current + 1;
+        }
+        return { upgrades: { ...up } } as Partial<GameState>;
+      });
+      // Persist progress asynchronously
+      setTimeout(() => {
+        get().saveGameState();
+      }, 100);
       
       // Show level up modal if user leveled up
       if (leveledUp) {
@@ -665,8 +775,25 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       }, 100); // Small delay to ensure state is updated
     }
     
-    // Update achievements
-    setTimeout(() => get().updateAchievements(), 0);
+    // Update achievements and upgrades progress, then persist
+    setTimeout(() => {
+      get().updateAchievements();
+      const st = get();
+      const prev = st.upgrades || {
+        powerLevel: 1,
+        powerPerClick: 1,
+        activeTrack: null,
+        currentPowerTask: undefined,
+        currentPowerPlant: null,
+        progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+      };
+      const next = {
+        ...prev,
+        progress: { ...prev.progress, totalWaterings: (prev.progress.totalWaterings || 0) + 1 },
+      };
+      set({ upgrades: next });
+      setTimeout(() => get().saveGameState(), 100);
+    }, 0);
     
     // Force state update for Telegram WebApp
     setTimeout(() => {
@@ -893,8 +1020,25 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       const bonusExperience = calculateBonusExperience(fertilizerData.experience);
       addExperience(fertilizerData.experience + bonusExperience);
       
-      // Update achievements after using fertilizer
-      setTimeout(() => get().updateAchievements(), 0);
+      // Update achievements and upgrades progress, then persist
+      setTimeout(() => {
+        get().updateAchievements();
+        const st = get();
+        const prev = st.upgrades || {
+          powerLevel: 1,
+          powerPerClick: 1,
+          activeTrack: null,
+          currentPowerTask: undefined,
+          currentPowerPlant: null,
+          progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+        };
+        const next = {
+          ...prev,
+          progress: { ...prev.progress, totalFertilizers: (prev.progress.totalFertilizers || 0) + 1 },
+        };
+        set({ upgrades: next });
+        setTimeout(() => get().saveGameState(), 100);
+      }, 0);
       
       // If plant is ready after applying fertilizer, harvest it
       if (newTimeLeft === 0) {
@@ -1378,6 +1522,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             farmPlots: migratedPlots,
             achievements: mergedAchievements,
             exchange: exchangeState,
+            upgrades: savedState.upgrades || currentState.upgrades || {
+              powerLevel: 1,
+              powerPerClick: 1,
+              activeTrack: null,
+              currentPowerTask: undefined,
+              currentPowerPlant: null,
+              progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+            },
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
             selectedPlantType: migratedSelectedPlant || currentState.selectedPlantType,

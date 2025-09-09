@@ -72,7 +72,7 @@ export const Header = () => {
   return (
     <header className="bg-green-600 text-white p-4 shadow-lg pt-24 relative z-50">
       {/* Help button - centered at the top */}
-      <div className="absolute top-10 left-1/2 transform -translate-x-1/2">
+      <div className="absolute top-[55px] left-1/2 transform -translate-x-1/2">
         <button
           onClick={() => setIsHelpModalOpen(true)}
           className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
