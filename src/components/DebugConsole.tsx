@@ -27,16 +27,16 @@ export default function DebugConsole() {
   }, []);
 
   return (
-    <div className="fixed bottom-24 right-2 z-[100]">
+    <div className="fixed right-2 top-[100px] z-[100]">
       <button
         onClick={() => setOpen(o => !o)}
-        className="px-2 py-1 rounded-md text-xs font-bold bg-black/60 text-white"
+        className="px-3 py-1.5 rounded-md text-xs font-bold bg-black/70 text-white shadow"
         title="Debug Console"
       >
         {open ? 'Close Debug' : 'Open Debug'}
       </button>
       {open && (
-        <div className="mt-2 w-[300px] h-[200px] bg-black/80 text-green-200 text-[10px] p-2 rounded overflow-auto">
+        <div className="mt-2 w-[320px] h-[220px] bg-black/85 text-green-200 text-[10px] p-2 rounded overflow-auto shadow-lg">
           {lines.map((l, i) => (
             <div key={i} className="whitespace-pre-wrap break-words">{l}</div>
           ))}
