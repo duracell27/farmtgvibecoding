@@ -9,11 +9,20 @@ export async function POST(req: NextRequest) {
     if (body?.pre_checkout_query) {
       const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
       const queryId = body.pre_checkout_query.id;
+      const userId = body.pre_checkout_query.from?.id;
       await fetch(`https://api.telegram.org/bot${botToken}/answerPreCheckoutQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pre_checkout_query_id: queryId, ok: true })
       });
+      // Notify user that payment is approved to proceed
+      if (userId) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: String(userId), text: '✅ Запит на оплату отримано. Завершіть оплату у відкритому вікні.' })
+        });
+      }
       return NextResponse.json({ ok: true });
     }
 
@@ -40,6 +49,17 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({ chat_id: userId, text: `✅ Оплата успішна. Зараховано ${emeraldsToAdd} смарагдів.` })
         });
       }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Simple ping to confirm webhook is alive
+    if (msg?.text === '/ping') {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: String(msg.chat.id), text: '🟢 Webhook працює' })
+      });
       return NextResponse.json({ ok: true });
     }
 
