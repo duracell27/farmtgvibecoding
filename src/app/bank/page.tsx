@@ -79,7 +79,12 @@ export default function BankPage() {
           return;
         }
 
-        // Attach invoiceClosed fallback listener (some clients don't call callback)
+        // Extract slug (tg.openInvoice очікує slug, а не повний URL)
+        const url: string = data.invoiceUrl;
+        const slugMatch = url.match(/\/([A-Za-z0-9_\-]+)$/);
+        const slug = slugMatch ? slugMatch[1] : url;
+
+        // Attach invoiceClosed fallback listener (some clients не викликають callback)
         const webapp = window.Telegram?.WebApp as unknown as {
           onEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
           offEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
@@ -111,7 +116,7 @@ export default function BankPage() {
         }
 
         if (typeof tg.openInvoice === 'function') {
-          tg.openInvoice(data.invoiceUrl, async (status) => {
+          tg.openInvoice(slug, async (status) => {
             try { console.log('[bank] openInvoice callback status:', status); } catch {}
             if (status === 'paid') { await onPaid(); tgLite?.showAlert(`Оплата успішна (cb): ${status}`); }
             else if (status === 'cancelled') { tgLite?.showAlert(`Покупку скасовано (cb): ${status}`); }
@@ -122,7 +127,7 @@ export default function BankPage() {
           setTimeout(() => { if (!closedHandled) offIfAny(); }, 120000);
         } else {
           // Fallback: open link
-          window.open(data.invoiceUrl, '_blank');
+          window.open(url, '_blank');
         }
       } else {
         // Fallback for development/testing
