@@ -143,6 +143,23 @@ export interface GameState {
       harvestsByPlant: Record<string, number>; // plantType -> count
     };
   };
+  // Equipment
+  equipment?: {
+    watering: {
+      level: number; // 0..10, enables "water all" and boosts exp per water
+    };
+    autoWatering: {
+      level: number; // 0..10, number of plots auto-watered per tick
+      enabled?: boolean;
+    };
+    fertilizing: {
+      level: number; // 0..10, enables "fertilize all" and boosts exp per fertilize
+    };
+    autoFertilizing: {
+      level: number; // 0..10, number of plots auto-fertilized per tick
+      enabled?: boolean;
+    };
+  };
   // Daily greeting modal
   dailyGreetingModal: {
     isOpen: boolean;
@@ -231,4 +248,12 @@ export interface GameActions {
 
   // Farm plot management
   resetFarmPlots: () => void;
+
+  // Equipment actions
+  getEquipmentPrice: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => number;
+  canBuyEquipment: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => boolean;
+  buyOrUpgradeEquipment: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => void;
+  waterAll: () => void;
+  fertilizeAll: () => void;
+  toggleAutoSystem: (kind: 'autoWatering' | 'autoFertilizing', enabled: boolean) => void;
 }

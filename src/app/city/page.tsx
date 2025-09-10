@@ -22,6 +22,14 @@ export default function CityPage() {
         />
       </div>
 
+      {/* Link to Shop */}
+      <div className="mt-6 w-full">
+        <Link href="/shop" className="w-full flex items-center justify-center bg-green-700 rounded-lg p-3 space-x-2 text-white hover:text-green-800 font-medium">
+          <Image src="/images/обмін.png" alt="Магазин" width={28} height={28} className="w-7 h-7 object-contain" />
+          <span className="text-xl font-bold">Магазин</span>
+        </Link>
+      </div>
+
       {/* Link to Exchange */}
       <div className="mt-6 w-full">
         <Link href="/exchange" className="w-full flex items-center justify-center bg-green-700 rounded-lg p-3 space-x-2 text-white hover:text-green-800 font-medium">

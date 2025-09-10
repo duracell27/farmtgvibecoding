@@ -416,6 +416,13 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     newPlantType: null,
     rewardCoins: 0,
   },
+  // Equipment initial state
+  equipment: {
+    watering: { level: 0 },
+    autoWatering: { level: 0, enabled: true },
+    fertilizing: { level: 0 },
+    autoFertilizing: { level: 0, enabled: true },
+  },
   exchange: {
     usedToday: 0,
     resetAt: (() => {
@@ -513,8 +520,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       },
     });
 
-    // persist upgrade
-    setTimeout(() => get().saveGameState(), 100);
+    // persistence handled by 30s auto-sync or manual sync button
     // toast
     get().showToast(`Потужність підвищено до ${newPower}с/клік!`, 'info');
   },
@@ -558,7 +564,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   },
 
   harvestPlant: (plotId: string) => {
-    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast, calculateBonusExperience, upgrades } = get();
+    const { farmPlots, warehouse, user, isHarvesting, selectedPlantType, showLevelUpModal, warehouseCapacity, showToast, calculateBonusExperience } = get();
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (plot && plot.plant && plot.plant.isReady && !isHarvesting) {
@@ -656,10 +662,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         }
         return { upgrades: { ...up } } as Partial<GameState>;
       });
-      // Persist progress asynchronously
-      setTimeout(() => {
-        get().saveGameState();
-      }, 100);
+      // persistence handled by 30s auto-sync or manual sync button
       
       // Show level up modal if user leveled up
       if (leveledUp) {
@@ -764,9 +767,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       user: newUser,
     });
     
-    // Add experience with bonus
-    const bonusExperience = calculateBonusExperience(WATERING_EXPERIENCE);
-    addExperience(WATERING_EXPERIENCE + bonusExperience);
+    // Add experience with bonus and watering equipment multiplier
+    const equipmentLevel = (get().equipment?.watering.level || 0);
+    const baseExp = WATERING_EXPERIENCE * Math.max(1, equipmentLevel || 1);
+    const bonusExperience = calculateBonusExperience(baseExp);
+    addExperience(baseExp + bonusExperience);
     
     // If plant is ready after watering, harvest it immediately
     if (newTimeLeft === 0) {
@@ -792,7 +797,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         progress: { ...prev.progress, totalWaterings: (prev.progress.totalWaterings || 0) + 1 },
       };
       set({ upgrades: next });
-      setTimeout(() => get().saveGameState(), 100);
+      // persistence handled by 30s auto-sync or manual sync button
     }, 0);
     
     // Force state update for Telegram WebApp
@@ -980,10 +985,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
   selectFertilizerType: (fertilizerType: FertilizerType | null) => {
     set({ selectedFertilizerType: fertilizerType });
     
-    // Auto-save when fertilizer type changes
-    setTimeout(() => {
-      get().saveGameState();
-    }, 100);
+    // persistence handled by 30s auto-sync or manual sync button
   },
 
   applyFertilizer: (plotId: string, fertilizerType: FertilizerType) => {
@@ -1028,9 +1030,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         },
       });
       
-      // Add experience for using fertilizer with bonus
-      const bonusExperience = calculateBonusExperience(fertilizerData.experience);
-      addExperience(fertilizerData.experience + bonusExperience);
+      // Add experience for using fertilizer with bonus and fertilizing equipment multiplier
+      const equipmentLevel = (get().equipment?.fertilizing.level || 0);
+      const baseExp = fertilizerData.experience * Math.max(1, equipmentLevel || 1);
+      const bonusExperience = calculateBonusExperience(baseExp);
+      addExperience(baseExp + bonusExperience);
       
       // Update achievements and upgrades progress, then persist
       setTimeout(() => {
@@ -1049,7 +1053,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           progress: { ...prev.progress, totalFertilizers: (prev.progress.totalFertilizers || 0) + 1 },
         };
         set({ upgrades: next });
-        setTimeout(() => get().saveGameState(), 100);
+        // persistence handled by 30s auto-sync or manual sync button
       }, 0);
       
       // If plant is ready after applying fertilizer, harvest it
@@ -1121,6 +1125,39 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     });
     
     set({ farmPlots: updatedPlots });
+
+    // Auto systems after ticking timers
+    const equipment = get().equipment;
+    // Auto watering: water up to N eligible plots
+    const autoWLevel = equipment?.autoWatering.level || 0;
+    const autoWEnabled = equipment?.autoWatering.enabled !== false;
+    if (autoWLevel > 0 && autoWEnabled) {
+      const eligible = get().farmPlots.filter(p => {
+        if (!p.plant || p.plant.isReady) return false;
+        const now = Date.now();
+        const cooldown = 15000;
+        return now - p.plant.lastWateredAt >= cooldown;
+      });
+      const toWater = eligible.slice(0, autoWLevel);
+      toWater.forEach(p => get().waterPlant(p.id));
+    }
+
+    // Auto fertilizing: apply selected fertilizer up to N eligible plots
+    const autoFLevel = equipment?.autoFertilizing.level || 0;
+    const autoFEnabled = equipment?.autoFertilizing.enabled !== false;
+    const selectedFertilizerType = get().selectedFertilizerType;
+    if (autoFLevel > 0 && autoFEnabled && selectedFertilizerType) {
+      const now = Date.now();
+      const FERTILIZER_DELAY = 120000;
+      const eligibleF = get().farmPlots.filter(p => {
+        if (!p.plant || p.plant.isReady) return false;
+        if (p.plant.fertilizerApplied) return false;
+        const timeSincePlanting = now - p.plant.plantedAt;
+        return timeSincePlanting >= FERTILIZER_DELAY;
+      });
+      const toFert = eligibleF.slice(0, autoFLevel);
+      toFert.forEach(p => get().applyFertilizer(p.id, selectedFertilizerType));
+    }
   },
 
   // Force state update for Telegram WebApp
@@ -1581,6 +1618,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
               currentPowerPlant: null,
               progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
             },
+            equipment: savedState.equipment || currentState.equipment || {
+              watering: { level: 0 },
+              autoWatering: { level: 0, enabled: true },
+              fertilizing: { level: 0 },
+              autoFertilizing: { level: 0, enabled: true },
+            },
             // Restore saved UI state
             activeTab: savedState.activeTab || currentState.activeTab,
             selectedPlantType: migratedSelectedPlant || currentState.selectedPlantType,
@@ -1719,10 +1762,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         },
       });
 
-      // Persist lastDailyGiftDate to server
-      setTimeout(() => {
-        get().saveGameState();
-      }, 0);
+      // persistence handled by 30s auto-sync or manual sync button
     }
   },
 
@@ -1741,5 +1781,162 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     set({
       farmPlots: generateFarmPlots(),
     });
+  },
+
+  // Equipment helpers and actions
+  getEquipmentPrice: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => {
+    const equipment = get().equipment || { watering: { level: 0 }, autoWatering: { level: 0 }, fertilizing: { level: 0 }, autoFertilizing: { level: 0 } };
+    const currentLevel =
+      kind === 'watering' ? equipment.watering.level :
+      kind === 'autoWatering' ? equipment.autoWatering.level :
+      kind === 'fertilizing' ? equipment.fertilizing.level :
+      equipment.autoFertilizing.level;
+    const nextLevel = currentLevel + 1;
+    if (nextLevel > 10) return 0;
+    if (kind === 'watering' || kind === 'fertilizing') {
+      return 100 * nextLevel; // 100, 200, ... 1000
+    }
+    // auto systems: 300, 400, ... 1200
+    return 200 + 100 * nextLevel; // level1 => 300
+  },
+
+  canBuyEquipment: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => {
+    const state = get();
+    const price = state.getEquipmentPrice(kind);
+    if (price <= 0) return false; // maxed
+    // prerequisite: auto systems require base level >= 1
+    if ((kind === 'autoWatering' && (state.equipment?.watering.level || 0) < 1) ||
+        (kind === 'autoFertilizing' && (state.equipment?.fertilizing.level || 0) < 1)) {
+      return false;
+    }
+    return state.user.emeralds >= price;
+  },
+
+  buyOrUpgradeEquipment: (kind: 'watering' | 'autoWatering' | 'fertilizing' | 'autoFertilizing') => {
+    const state = get();
+    const price = state.getEquipmentPrice(kind);
+    const equip = state.equipment || { watering: { level: 0 }, autoWatering: { level: 0 }, fertilizing: { level: 0 }, autoFertilizing: { level: 0 } };
+    const currentLevel =
+      kind === 'watering' ? equip.watering.level :
+      kind === 'autoWatering' ? equip.autoWatering.level :
+      kind === 'fertilizing' ? equip.fertilizing.level :
+      equip.autoFertilizing.level;
+    if (currentLevel >= 10) return;
+    // prerequisites
+    if ((kind === 'autoWatering' && (equip.watering.level || 0) < 1) ||
+        (kind === 'autoFertilizing' && (equip.fertilizing.level || 0) < 1)) {
+      state.showToast('Спочатку купіть базову техніку', 'warning');
+      return;
+    }
+    if (state.user.emeralds < price) {
+      state.showToast('Недостатньо смарагдів', 'warning');
+      return;
+    }
+    set({
+      user: { ...state.user, emeralds: state.user.emeralds - price },
+      equipment: {
+        watering: { level: kind === 'watering' ? currentLevel + 1 : (equip.watering.level || 0) },
+        autoWatering: { level: kind === 'autoWatering' ? currentLevel + 1 : (equip.autoWatering.level || 0), enabled: equip.autoWatering.enabled !== false },
+        fertilizing: { level: kind === 'fertilizing' ? currentLevel + 1 : (equip.fertilizing.level || 0) },
+        autoFertilizing: { level: kind === 'autoFertilizing' ? currentLevel + 1 : (equip.autoFertilizing.level || 0), enabled: equip.autoFertilizing.enabled !== false },
+      },
+    });
+    // Persist immediately to avoid losing purchases on refresh
+    setTimeout(() => {
+      try { get().saveGameState(); } catch {}
+    }, 0);
+  },
+
+  waterAll: () => {
+    const state = get();
+    const plots = state.farmPlots;
+    const now = Date.now();
+    const WATERING_COOLDOWN = 15000;
+    const WATERING_TIME_REDUCTION = 15;
+    const eligible = plots.filter(p => p.plant && !p.plant.isReady && now - p.plant.lastWateredAt >= WATERING_COOLDOWN);
+    if (eligible.length === 0) return;
+    const updatedPlots = plots.map(p => {
+      if (!p.plant) return p;
+      const eligibleThis = now - p.plant.lastWateredAt >= WATERING_COOLDOWN && !p.plant.isReady;
+      if (!eligibleThis) return p;
+      const newTimeLeft = Math.max(0, p.plant.timeLeft - WATERING_TIME_REDUCTION);
+      return { ...p, plant: { ...p.plant, timeLeft: newTimeLeft, isReady: newTimeLeft === 0, lastWateredAt: now } };
+    });
+    // experience per watered plot with equipment multiplier and bonus
+    const basePerPlot = 10 * Math.max(1, (state.equipment?.watering.level || 1));
+    const totalBase = basePerPlot * eligible.length;
+    const bonus = state.calculateBonusExperience(totalBase);
+    set({
+      farmPlots: updatedPlots,
+      user: { ...state.user, totalWaterings: state.user.totalWaterings + eligible.length },
+    });
+    state.addExperience(totalBase + bonus);
+    // trigger harvest for those that reached zero
+    setTimeout(() => {
+      updatedPlots.forEach(p => {
+        if (p.plant?.isReady) state.harvestPlant(p.id);
+      });
+    }, 0);
+  },
+
+  fertilizeAll: () => {
+    const state = get();
+    const fertType = state.selectedFertilizerType;
+    if (!fertType) return;
+    const fertData = FERTILIZER_DATA[fertType];
+    const now = Date.now();
+    const FERTILIZER_DELAY = 120000;
+    let coins = state.user.coins;
+    const eligible = state.farmPlots.filter(p => {
+      const pl = p.plant;
+      if (!pl || pl.isReady) return false;
+      if (pl.fertilizerApplied) return false;
+      if (now - pl.plantedAt < FERTILIZER_DELAY) return false;
+      return true;
+    });
+    if (eligible.length === 0) return;
+    const updatedPlots = state.farmPlots.map(p => {
+      if (!p.plant) return p;
+      if (p.plant.isReady || p.plant.fertilizerApplied) return p;
+      if (now - p.plant.plantedAt < FERTILIZER_DELAY) return p;
+      if (coins < fertData.price) return p; // cannot afford more
+      coins -= fertData.price;
+      const timeReductionSeconds = fertData.timeReduction * 60;
+      const newTimeLeft = Math.max(0, p.plant.timeLeft - timeReductionSeconds);
+      return { ...p, plant: { ...p.plant, timeLeft: newTimeLeft, isReady: newTimeLeft === 0, fertilizerApplied: fertType, lastFertilizedAt: now } };
+    });
+    const appliedCount = state.farmPlots.reduce((cnt, p, idx) => {
+      const before = p.plant?.fertilizerApplied;
+      const after = updatedPlots[idx].plant?.fertilizerApplied;
+      return cnt + (before ? 0 : after ? 1 : 0);
+    }, 0);
+    if (appliedCount === 0) return;
+    const basePerPlot = fertData.experience * Math.max(1, (state.equipment?.fertilizing.level || 1));
+    const totalBase = basePerPlot * appliedCount;
+    const bonus = state.calculateBonusExperience(totalBase);
+    set({
+      farmPlots: updatedPlots,
+      user: { ...state.user, coins, totalFertilizers: state.user.totalFertilizers + appliedCount },
+    });
+    state.addExperience(totalBase + bonus);
+    setTimeout(() => {
+      updatedPlots.forEach(p => {
+        if (p.plant?.isReady) state.harvestPlant(p.id);
+      });
+    }, 0);
+  },
+
+  toggleAutoSystem: (kind: 'autoWatering' | 'autoFertilizing', enabled: boolean) => {
+    const state = get();
+    const equip = state.equipment || { watering: { level: 0 }, autoWatering: { level: 0, enabled: true }, fertilizing: { level: 0 }, autoFertilizing: { level: 0, enabled: true } };
+    if (kind === 'autoWatering') {
+      set({ equipment: { ...equip, autoWatering: { ...equip.autoWatering, enabled } } });
+    } else {
+      set({ equipment: { ...equip, autoFertilizing: { ...equip.autoFertilizing, enabled } } });
+    }
+    // Persist toggle state as well
+    setTimeout(() => {
+      try { get().saveGameState(); } catch {}
+    }, 0);
   },
 }));

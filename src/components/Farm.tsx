@@ -33,6 +33,10 @@ export const Farm = () => {
     dailyGreetingModal,
     claimDailyGift,
     checkDailyGift,
+    equipment,
+    waterAll,
+    fertilizeAll,
+    toggleAutoSystem,
   } = useGameStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -401,26 +405,51 @@ export const Farm = () => {
           <h3 className="text-lg font-semibold text-gray-800">
             Грядки: {farmPlots.filter((p) => p.isUnlocked).length}/15
           </h3>
-          {(() => {
-            const unlockedCount = farmPlots.filter((p) => p.isUnlocked).length;
-            const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
-            const nextPlot = lockedPlots[0]; // First locked plot
-
-            if (unlockedCount < 15 && nextPlot) {
-              return (
-                <div className="text-sm text-gray-600 flex items-center space-x-1">
-                  <span>Наступна:</span>
-                  <span className="font-medium">{nextPlot.unlockPrice}</span>
-                  {nextPlot.unlockCurrency === 'emeralds' ? (
-                    <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-6 h-6 object-contain" />
-                  ) : (
-                    <Image src="/images/монета.png" alt="Монети" width={20} height={20} className="w-6 h-6 object-contain" />
-                  )}
-                </div>
-              );
-            }
-            return <div className="text-sm text-green-600">Всі 15 грядок розблоковані! 🎉</div>;
-          })()}
+          <div className="flex flex-wrap items-end justify-end gap-2">
+            {(equipment?.autoWatering.level || 0) > 0 && (
+              <button
+                onClick={() => toggleAutoSystem('autoWatering', !(equipment?.autoWatering.enabled !== false))}
+                className={`flex items-center justify-center rounded-lg px-2 py-1 text-sm font-semibold ${
+                  (equipment?.autoWatering.enabled !== false) ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-200 text-white'
+                }`}
+                title={(equipment?.autoWatering.enabled !== false) ? 'Автополив: увімкнено' : 'Автополив: вимкнено'}
+              >
+                <span className="mr-1">💧</span> {(equipment?.autoWatering.enabled !== false) ? 'ON' : 'OFF'}
+              </button>
+            )}
+            {(equipment?.autoFertilizing.level || 0) > 0 && (
+              <button
+                onClick={() => toggleAutoSystem('autoFertilizing', !(equipment?.autoFertilizing.enabled !== false))}
+                className={`flex items-center justify-center rounded-lg px-2 py-1 text-sm font-semibold ${
+                  (equipment?.autoFertilizing.enabled !== false) ? 'bg-orange-600 text-white hover:bg-orange-700' : 'bg-orange-200 text-white'
+                }`}
+                title={(equipment?.autoFertilizing.enabled !== false) ? 'Автоудобрення: увімкнено' : 'Автоудобрення: вимкнено'}
+              >
+                <span className="mr-1">🌿</span> {(equipment?.autoFertilizing.enabled !== false) ? 'ON' : 'OFF'}
+              </button>
+            )}
+            {(equipment?.watering.level || 0) > 0 && (equipment?.autoWatering.enabled === false || equipment?.autoWatering.level === 0) && (
+              <button
+                onClick={waterAll}
+                className={`flex items-center justify-center rounded-lg px-1 py-1 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700`}
+                title={'Полити всі грядки'}
+              >
+                <span className="mr-1">💧</span> Полити всі
+              </button>
+            )}
+            {(equipment?.fertilizing.level || 0) > 0 && (equipment?.autoFertilizing.enabled === false || equipment?.autoFertilizing.level === 0) && (
+              <button
+                onClick={fertilizeAll}
+                disabled={!selectedFertilizerType}
+                className={`flex items-center justify-center rounded-lg px-1 py-1 text-sm font-semibold ${
+                  !selectedFertilizerType ? 'bg-orange-200 text-white' : 'bg-orange-600 text-white hover:bg-orange-700'
+                }`}
+                title={!selectedFertilizerType ? 'Оберіть добриво' : 'Удобрити всі доступні'}
+              >
+                <span className="mr-1">🌿</span> Удобрити всі
+              </button>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-4 rounded-lg p-2">
           {farmPlots
@@ -637,7 +666,7 @@ export const Farm = () => {
                           <>
                             <div className="text-lg font-medium">🛒</div>
                             <div className="text-sm font-bold flex items-center space-x-1 justify-center">
-                              <span>{plot.unlockPrice}</span>
+                              <span>{new Intl.NumberFormat('uk-UA').format(plot.unlockPrice)}</span>
                               {plot.unlockCurrency === 'emeralds' ? (
                                 <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                               ) : (
@@ -650,7 +679,7 @@ export const Farm = () => {
                           <>
                             <div className="text-lg font-medium">🔒</div>
                             <div className="text-sm font-bold flex items-center space-x-1 justify-center">
-                              <span>{plot.unlockPrice}</span>
+                              <span>{new Intl.NumberFormat('uk-UA').format(plot.unlockPrice)}</span>
                               {plot.unlockCurrency === 'emeralds' ? (
                                 <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                               ) : (
@@ -659,7 +688,7 @@ export const Farm = () => {
                             </div>
                             <div className="text-xs text-red-300 font-medium">
                               <span className="flex items-center justify-center space-x-1">
-                                <span>Потрібно: {plot.unlockCurrency === 'emeralds' ? Math.max(0, plot.unlockPrice - user.emeralds) : Math.max(0, plot.unlockPrice - user.coins)}</span>
+                                <span>Потрібно: {new Intl.NumberFormat('uk-UA').format(plot.unlockCurrency === 'emeralds' ? Math.max(0, plot.unlockPrice - user.emeralds) : Math.max(0, plot.unlockPrice - user.coins))}</span>
                                 {plot.unlockCurrency === 'emeralds' ? (
                                   <Image src="/images/смарагд.png" alt="Смарагд" width={20} height={20} className="w-5 h-5 object-contain" />
                                 ) : (
@@ -682,7 +711,7 @@ export const Farm = () => {
                         <div className="text-white flex flex-col items-center justify-center text-sm font-medium">
                           <div className="flex items-center space-x-1">
                             <span>Садити {PLANT_DATA[selectedPlantType].name}</span>
-                            <span className="font-bold">{PLANT_DATA[selectedPlantType].buyPrice}</span>
+                            <span className="font-bold">{new Intl.NumberFormat('uk-UA').format(PLANT_DATA[selectedPlantType].buyPrice)}</span>
                             <Image src="/images/монета.png" alt="Монети" width={16} height={16} className="w-4 h-4 object-contain" />
                           </div>
                           <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
@@ -702,7 +731,7 @@ export const Farm = () => {
                           <div className="text-2xl font-bold">⚠️</div>
                           <div className="text-xs font-medium">Недостатньо коштів!</div>
                           <div className="text-xs flex items-center justify-center space-x-1">
-                            <span>Потрібно: {PLANT_DATA[selectedPlantType].buyPrice}</span>
+                            <span>Потрібно: {new Intl.NumberFormat('uk-UA').format(PLANT_DATA[selectedPlantType].buyPrice)}</span>
                             <Image src="/images/монета.png" alt="Монети" width={12} height={12} className="w-3 h-3 object-contain" />
                           </div>
                         </div>
@@ -718,6 +747,8 @@ export const Farm = () => {
       <div className="my-4" ref={bottomActionsRef}>
         <div className="border-t border-gray-200" />
         <div className="mt-3 space-y-2">
+          {/* Global actions moved to header above */}
+
           <Link href="/city" className="flex bg-green-700 rounded-lg p-2 space-x-2 text-white hover:text-green-800 font-medium">
             <Image src="/images/місто.png" alt="Місто" width={20} height={20} className="w-7 h-7 object-contain" />
             <span className="text-xl font-bold">Місто</span>
