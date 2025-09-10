@@ -68,6 +68,7 @@ export default function BankPage() {
           }),
         });
         const data = await resp.json();
+        try { console.log('[bank] createInvoice result bot:', data?.bot); } catch {}
         if (!data.success || !data.invoiceUrl) {
           const msg = data?.error || 'Не вдалося створити інвойс';
           if (window.Telegram?.WebApp) {

@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
     // Telegram Stars (XTR) expect amount as an integer number of stars (no *100)
     const prices = [{ label: 'Stars', amount: Math.round(amountStars) }];
 
+    const getMeResp = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const getMe = await getMeResp.json().catch(() => null);
+    const botUsername = getMe?.ok ? getMe.result?.username : undefined;
+
     const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -48,7 +52,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: data?.description || 'Telegram API error', raw: data }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, invoiceUrl: data.result });
+    // Return bot info to verify the token matches the WebApp bot
+    return NextResponse.json({ success: true, invoiceUrl: data.result, bot: botUsername ? { username: botUsername } : null });
   } catch (error) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
   }
