@@ -83,6 +83,7 @@ export default function BankPage() {
           offEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
         } | undefined;
         let closedHandled = false;
+        const tgLite = window.Telegram.WebApp as unknown as TelegramWebAppLite;
         const offIfAny = () => {
           if (webapp && typeof webapp.offEvent === 'function' && handler) {
             try { webapp.offEvent('invoiceClosed', handler); } catch {}
@@ -97,9 +98,10 @@ export default function BankPage() {
         };
         const handler = (event: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => {
           if (!event || !event.status) return;
-          if (event.status === 'paid') onPaid();
-          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); }
-          else if (event.status === 'failed') { closedHandled = true; offIfAny(); }
+          if (event.status === 'paid') { onPaid(); tgLite?.showAlert('Оплата успішна (invoiceClosed)'); }
+          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); tgLite?.showAlert('Покупку скасовано'); }
+          else if (event.status === 'failed') { closedHandled = true; offIfAny(); tgLite?.showAlert('Оплата не пройшла'); }
+          else if (event.status === 'pending') { tgLite?.showAlert('Оплата очікується...'); }
         };
         if (webapp && typeof webapp.onEvent === 'function') {
           try { webapp.onEvent('invoiceClosed', handler); } catch {}
@@ -107,7 +109,10 @@ export default function BankPage() {
 
         if (typeof tg.openInvoice === 'function') {
           tg.openInvoice(data.invoiceUrl, async (status) => {
-            if (status === 'paid') await onPaid();
+            if (status === 'paid') { await onPaid(); tgLite?.showAlert('Оплата успішна'); }
+            else if (status === 'cancelled') { tgLite?.showAlert('Покупку скасовано'); }
+            else if (status === 'failed') { tgLite?.showAlert('Оплата не пройшла'); }
+            else if (status === 'pending') { tgLite?.showAlert('Оплата очікується...'); }
           });
           // Failsafe timeout: if invoice closes without callback, rely on 'invoiceClosed' or ignore
           setTimeout(() => { if (!closedHandled) offIfAny(); }, 120000);
