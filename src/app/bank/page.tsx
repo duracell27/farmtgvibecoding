@@ -91,6 +91,7 @@ export default function BankPage() {
         } | undefined;
         let closedHandled = false;
         let retriedOpen = false;
+        let retriedWithUrl = false;
         const startedAt = Date.now();
         const tgLite = window.Telegram.WebApp as unknown as TelegramWebAppLite;
         const offIfAny = () => {
@@ -113,6 +114,15 @@ export default function BankPage() {
             // Якщо дуже швидко приходить cancelled, спробуємо відкрити інвойс напряму урлом (разово)
             if (!retriedOpen && Date.now() - startedAt < 1500) {
               retriedOpen = true;
+              // Перша спроба ретраю — ще раз через openInvoice, але з повним URL
+              try {
+                if (typeof tg.openInvoice === 'function' && !retriedWithUrl) {
+                  retriedWithUrl = true;
+                  tg.openInvoice(url as unknown as string);
+                  return;
+                }
+              } catch {}
+              // Якщо не вдалось — відкриваємо у браузері
               try { window.open(url, '_blank'); } catch {}
               try { tgLite?.showAlert('Спроба повторно відкрити оплату...'); } catch {}
               return;
@@ -133,6 +143,13 @@ export default function BankPage() {
             else if (status === 'cancelled') {
               if (!retriedOpen && Date.now() - startedAt < 1500) {
                 retriedOpen = true;
+                try {
+                  if (typeof tg.openInvoice === 'function' && !retriedWithUrl) {
+                    retriedWithUrl = true;
+                    tg.openInvoice(url as unknown as string);
+                    return;
+                  }
+                } catch {}
                 try { window.open(url, '_blank'); } catch {}
                 try { tgLite?.showAlert('Спроба повторно відкрити оплату...'); } catch {}
               } else {
