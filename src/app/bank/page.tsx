@@ -97,11 +97,12 @@ export default function BankPage() {
           offIfAny();
         };
         const handler = (event: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => {
+          try { console.log('[bank] invoiceClosed event:', event); } catch {}
           if (!event || !event.status) return;
-          if (event.status === 'paid') { onPaid(); tgLite?.showAlert('Оплата успішна (invoiceClosed)'); }
-          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); tgLite?.showAlert('Покупку скасовано'); }
-          else if (event.status === 'failed') { closedHandled = true; offIfAny(); tgLite?.showAlert('Оплата не пройшла'); }
-          else if (event.status === 'pending') { tgLite?.showAlert('Оплата очікується...'); }
+          if (event.status === 'paid') { onPaid(); tgLite?.showAlert(`Оплата успішна (invoiceClosed): ${JSON.stringify(event)}`); }
+          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); tgLite?.showAlert(`Покупку скасовано: ${JSON.stringify(event)}`); }
+          else if (event.status === 'failed') { closedHandled = true; offIfAny(); tgLite?.showAlert(`Оплата не пройшла: ${JSON.stringify(event)}`); }
+          else if (event.status === 'pending') { tgLite?.showAlert(`Оплата очікується: ${JSON.stringify(event)}`); }
         };
         if (webapp && typeof webapp.onEvent === 'function') {
           try { webapp.onEvent('invoiceClosed', handler); } catch {}
@@ -109,10 +110,11 @@ export default function BankPage() {
 
         if (typeof tg.openInvoice === 'function') {
           tg.openInvoice(data.invoiceUrl, async (status) => {
-            if (status === 'paid') { await onPaid(); tgLite?.showAlert('Оплата успішна'); }
-            else if (status === 'cancelled') { tgLite?.showAlert('Покупку скасовано'); }
-            else if (status === 'failed') { tgLite?.showAlert('Оплата не пройшла'); }
-            else if (status === 'pending') { tgLite?.showAlert('Оплата очікується...'); }
+            try { console.log('[bank] openInvoice callback status:', status); } catch {}
+            if (status === 'paid') { await onPaid(); tgLite?.showAlert(`Оплата успішна (cb): ${status}`); }
+            else if (status === 'cancelled') { tgLite?.showAlert(`Покупку скасовано (cb): ${status}`); }
+            else if (status === 'failed') { tgLite?.showAlert(`Оплата не пройшла (cb): ${status}`); }
+            else if (status === 'pending') { tgLite?.showAlert(`Оплата очікується (cb): ${status}`); }
           });
           // Failsafe timeout: if invoice closes without callback, rely on 'invoiceClosed' or ignore
           setTimeout(() => { if (!closedHandled) offIfAny(); }, 120000);
