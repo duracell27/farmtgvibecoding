@@ -1487,8 +1487,28 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
               })
             : currentState.farmPlots;
 
+          // Ensure we have all 15 plots - add missing plots if needed
+          const allPlots = generateFarmPlots(); // Get the complete set of 15 plots
+          const existingPlotsMap = new Map(migratedPlots.map((p: FarmPlot) => [p.id, p]));
+          
+          // Merge existing plots with the complete set
+          const mergedPlots: FarmPlot[] = allPlots.map(defaultPlot => {
+            const existingPlot = existingPlotsMap.get(defaultPlot.id);
+            if (existingPlot) {
+              // Use existing plot data but ensure correct pricing
+              return {
+                ...existingPlot,
+                unlockPrice: defaultPlot.unlockPrice,
+                unlockCurrency: defaultPlot.unlockCurrency,
+              } as FarmPlot;
+            } else {
+              // Use default plot (locked)
+              return defaultPlot;
+            }
+          });
+
           // Fix sequential plot unlocking - ensure plots are unlocked in order
-          const fixedPlots = migratedPlots.map((plot: FarmPlot, index: number) => {
+          const fixedPlots = mergedPlots.map((plot: FarmPlot, index: number) => {
             const plotNumber = index + 1;
             
             // Plot 1 is always unlocked
@@ -1497,7 +1517,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
             }
             
             // For other plots, check if previous plot is unlocked
-            const previousPlot = migratedPlots[plotNumber - 2]; // index - 1 for previous plot
+            const previousPlot = mergedPlots[plotNumber - 2]; // index - 1 for previous plot
             if (previousPlot?.isUnlocked) {
               return plot; // Keep current state
             } else {
