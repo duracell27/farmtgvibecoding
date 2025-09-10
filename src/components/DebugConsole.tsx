@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 export default function DebugConsole() {
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
-  const originalLog = useRef<(...args: unknown[]) => void>();
-  const originalError = useRef<(...args: unknown[]) => void>();
+  const originalLog = useRef<((...args: unknown[]) => void) | null>(null);
+  const originalError = useRef<((...args: unknown[]) => void) | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -18,8 +18,8 @@ export default function DebugConsole() {
       }).join(' ')}`;
       setLines(prev => [...prev.slice(-200), msg]);
     };
-    console.log = (...args: unknown[]) => { push('[log]', args); originalLog.current?.(...args); };
-    console.error = (...args: unknown[]) => { push('[error]', args); originalError.current?.(...args); };
+    console.log = (...args: unknown[]) => { push('[log]', args); originalLog.current && originalLog.current(...args); };
+    console.error = (...args: unknown[]) => { push('[error]', args); originalError.current && originalError.current(...args); };
     return () => {
       if (originalLog.current) console.log = originalLog.current;
       if (originalError.current) console.error = originalError.current;
