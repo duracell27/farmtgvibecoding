@@ -67,7 +67,6 @@ export default function BankPage() {
           }),
         });
         const data = await resp.json();
-        try { console.log('[bank] createInvoice result bot:', data?.bot); } catch {}
         if (!data.success || !data.invoiceUrl) {
           const msg = data?.error || 'Не вдалося створити інвойс';
           if (window.Telegram?.WebApp) {
@@ -99,18 +98,42 @@ export default function BankPage() {
             try { webapp.offEvent('invoiceClosed', handler); } catch {}
           }
         };
+        const getUserId = (): number | null => {
+          const tgAny = window.Telegram?.WebApp as { initDataUnsafe?: { user?: { id?: number } } } | undefined;
+          return tgAny?.initDataUnsafe?.user?.id ?? null;
+        };
+        const recordPayment = async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+          try {
+            const userId = getUserId();
+            await fetch('/api/payments/record', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId,
+                packageId: selectedPkg.id,
+                stars: selectedPkg.price,
+                emeralds: selectedPkg.emeralds,
+                status,
+                source: 'webapp',
+                extra: { slug }
+              })
+            });
+          } catch {}
+        };
+
         const onPaid = async () => {
           closedHandled = true;
           if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
           if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
           try { await saveGameState(); } catch {}
           offIfAny();
+          recordPayment('paid');
         };
         const handler = (event: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => {
-          try { console.log('[bank] invoiceClosed event:', event); } catch {}
           if (!event || !event.status) return;
           if (event.status === 'paid') { onPaid(); tgLite?.showAlert(`Оплата успішна (invoiceClosed): ${JSON.stringify(event)}`); }
           else if (event.status === 'cancelled') {
+            recordPayment('cancelled');
             // Якщо дуже швидко приходить cancelled, спробуємо відкрити інвойс напряму урлом (разово)
             if (!retriedOpen && Date.now() - startedAt < 1500) {
               retriedOpen = true;
@@ -156,8 +179,8 @@ export default function BankPage() {
                 tgLite?.showAlert(`Покупку скасовано (cb): ${status}`);
               }
             }
-            else if (status === 'failed') { tgLite?.showAlert(`Оплата не пройшла (cb): ${status}`); }
-            else if (status === 'pending') { tgLite?.showAlert(`Оплата очікується (cb): ${status}`); }
+            else if (status === 'failed') { recordPayment('failed'); tgLite?.showAlert(`Оплата не пройшла (cb): ${status}`); }
+            else if (status === 'pending') { recordPayment('pending'); tgLite?.showAlert(`Оплата очікується (cb): ${status}`); }
           });
           // Failsafe timeout: if invoice closes without callback, rely on 'invoiceClosed' or ignore
           setTimeout(() => { if (!closedHandled) offIfAny(); }, 120000);
