@@ -90,6 +90,8 @@ export default function BankPage() {
           offEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
         } | undefined;
         let closedHandled = false;
+        let retriedOpen = false;
+        const startedAt = Date.now();
         const tgLite = window.Telegram.WebApp as unknown as TelegramWebAppLite;
         const offIfAny = () => {
           if (webapp && typeof webapp.offEvent === 'function' && handler) {
@@ -107,7 +109,16 @@ export default function BankPage() {
           try { console.log('[bank] invoiceClosed event:', event); } catch {}
           if (!event || !event.status) return;
           if (event.status === 'paid') { onPaid(); tgLite?.showAlert(`Оплата успішна (invoiceClosed): ${JSON.stringify(event)}`); }
-          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); tgLite?.showAlert(`Покупку скасовано: ${JSON.stringify(event)}`); }
+          else if (event.status === 'cancelled') {
+            // Якщо дуже швидко приходить cancelled, спробуємо відкрити інвойс напряму урлом (разово)
+            if (!retriedOpen && Date.now() - startedAt < 1500) {
+              retriedOpen = true;
+              try { window.open(url, '_blank'); } catch {}
+              try { tgLite?.showAlert('Спроба повторно відкрити оплату...'); } catch {}
+              return;
+            }
+            closedHandled = true; offIfAny(); tgLite?.showAlert(`Покупку скасовано: ${JSON.stringify(event)}`);
+          }
           else if (event.status === 'failed') { closedHandled = true; offIfAny(); tgLite?.showAlert(`Оплата не пройшла: ${JSON.stringify(event)}`); }
           else if (event.status === 'pending') { tgLite?.showAlert(`Оплата очікується: ${JSON.stringify(event)}`); }
         };
@@ -119,7 +130,15 @@ export default function BankPage() {
           tg.openInvoice(slug, async (status) => {
             try { console.log('[bank] openInvoice callback status:', status); } catch {}
             if (status === 'paid') { await onPaid(); tgLite?.showAlert(`Оплата успішна (cb): ${status}`); }
-            else if (status === 'cancelled') { tgLite?.showAlert(`Покупку скасовано (cb): ${status}`); }
+            else if (status === 'cancelled') {
+              if (!retriedOpen && Date.now() - startedAt < 1500) {
+                retriedOpen = true;
+                try { window.open(url, '_blank'); } catch {}
+                try { tgLite?.showAlert('Спроба повторно відкрити оплату...'); } catch {}
+              } else {
+                tgLite?.showAlert(`Покупку скасовано (cb): ${status}`);
+              }
+            }
             else if (status === 'failed') { tgLite?.showAlert(`Оплата не пройшла (cb): ${status}`); }
             else if (status === 'pending') { tgLite?.showAlert(`Оплата очікується (cb): ${status}`); }
           });
