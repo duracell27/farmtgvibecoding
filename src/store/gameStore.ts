@@ -1880,6 +1880,22 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       user: { ...state.user, totalWaterings: state.user.totalWaterings + eligible.length },
     });
     state.addExperience(totalBase + bonus);
+    // Also update upgrades progress for waterings (counts toward power tasks)
+    set((st) => {
+      const up = st.upgrades || {
+        powerLevel: 1,
+        powerPerClick: 1,
+        activeTrack: null,
+        currentPowerTask: undefined,
+        currentPowerPlant: null,
+        progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+      };
+      const next = {
+        ...up,
+        progress: { ...up.progress, totalWaterings: (up.progress.totalWaterings || 0) + eligible.length },
+      };
+      return { upgrades: next } as Partial<GameState>;
+    });
     // trigger harvest for those that reached zero
     setTimeout(() => {
       updatedPlots.forEach(p => {
@@ -1928,6 +1944,22 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       user: { ...state.user, coins, totalFertilizers: state.user.totalFertilizers + appliedCount },
     });
     state.addExperience(totalBase + bonus);
+    // Update upgrades progress for fertilizers
+    set((st) => {
+      const up = st.upgrades || {
+        powerLevel: 1,
+        powerPerClick: 1,
+        activeTrack: null,
+        currentPowerTask: undefined,
+        currentPowerPlant: null,
+        progress: { totalWaterings: 0, totalFertilizers: 0, harvestsByPlant: {} },
+      };
+      const next = {
+        ...up,
+        progress: { ...up.progress, totalFertilizers: (up.progress.totalFertilizers || 0) + appliedCount },
+      };
+      return { upgrades: next } as Partial<GameState>;
+    });
     setTimeout(() => {
       updatedPlots.forEach(p => {
         if (p.plant?.isReady) state.harvestPlant(p.id);
