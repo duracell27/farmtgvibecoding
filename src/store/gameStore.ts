@@ -484,6 +484,10 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         currentPowerPlant: randomPlant,
       },
     });
+    // Persist immediately (prevents task reset on reload)
+    setTimeout(() => {
+      try { get().saveGameState(); } catch {}
+    }, 0);
   },
   completePowerTask: () => {
     const state = get();
@@ -519,6 +523,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         currentPowerPlant: null,
       },
     });
+
+    // Persist immediately (prevents losing upgraded power on reload)
+    setTimeout(() => {
+      try { get().saveGameState(); } catch {}
+    }, 0);
 
     // persistence handled by 30s auto-sync or manual sync button
     // toast
