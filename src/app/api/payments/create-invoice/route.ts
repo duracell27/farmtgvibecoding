@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid amountStars' }, { status: 400 });
     }
 
-    // Telegram Stars use currency XTR; amount is in the smallest units (multiply by 100)
-    const prices = [{ label: 'Stars', amount: Math.round(amountStars * 100) }];
+    // Telegram Stars (XTR) expect amount as an integer number of stars (no *100)
+    const prices = [{ label: 'Stars', amount: Math.round(amountStars) }];
 
     const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, {
       method: 'POST',

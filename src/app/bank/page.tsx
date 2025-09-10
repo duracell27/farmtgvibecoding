@@ -23,7 +23,7 @@ interface TelegramWebAppLite {
 }
 
 export default function BankPage() {
-  const { user, addCoins, addEmeralds } = useGameStore();
+  const { user, addCoins, addEmeralds, saveGameState } = useGameStore();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
   // Bank packages for coins and emeralds
@@ -35,6 +35,7 @@ export default function BankPage() {
   ];
 
   const emeraldPackages = [
+    { id: 'emeralds-test-50', name: 'ТЕСТ: 50 смарагдів', price: 10, coins: 0, emeralds: 50, popular: false },
     { id: 'emeralds-100', name: '100 смарагдів', price: 50, coins: 0, emeralds: 100, popular: false },
     { id: 'emeralds-220', name: '220 смарагдів', price: 100, coins: 0, emeralds: 220, popular: false },
     { id: 'emeralds-550', name: '550 смарагдів', price: 250, coins: 0, emeralds: 550, popular: true },
@@ -77,10 +78,11 @@ export default function BankPage() {
         }
 
         if (typeof tg.openInvoice === 'function') {
-          tg.openInvoice(data.invoiceUrl, (status) => {
+          tg.openInvoice(data.invoiceUrl, async (status) => {
             if (status === 'paid') {
               if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
               if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
+              try { await saveGameState(); } catch {}
             }
           });
         } else {
@@ -89,12 +91,9 @@ export default function BankPage() {
         }
       } else {
         // Fallback for development/testing
-        if (selectedPkg.coins > 0) {
-          addCoins(selectedPkg.coins);
-        }
-        if (selectedPkg.emeralds > 0) {
-          addEmeralds(selectedPkg.emeralds);
-        }
+        if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
+        if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
+        try { await saveGameState(); } catch {}
         alert(`Покупка успішна! Отримано: ${selectedPkg.coins > 0 ? selectedPkg.coins + ' монет' : selectedPkg.emeralds + ' смарагдів'}`);
       }
     } catch (error) {

@@ -103,7 +103,7 @@ export const Header = () => {
           </button>
           <button
             onClick={() => setIsHelpModalOpen(true)}
-            className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
+            className="bg-white/20 hover:bg-white/30 text-white px-1 py-1 rounded-full text-sm font-medium transition-colors backdrop-blur-sm"
           >
              Як грати ❓
           </button>
