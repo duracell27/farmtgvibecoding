@@ -54,13 +54,7 @@ export default function BankPage() {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp as unknown as TelegramWebAppLite & { openInvoice?: (url: string, cb?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void) => void };
 
-        // Temporary: bypass payment for TEST package to validate crediting/saving
-        if (selectedPkg.id === 'emeralds-test-50') {
-          if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
-          try { await saveGameState(); } catch {}
-          tg.showAlert('ТЕСТ пакет зараховано без списання зірок.');
-          return;
-        }
+        // Remove bypass: real payment flow for TEST package too
 
         // Create invoice via our API (amount in Stars)
         const resp = await fetch('/api/payments/create-invoice', {
