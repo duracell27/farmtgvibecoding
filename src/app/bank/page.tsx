@@ -77,14 +77,40 @@ export default function BankPage() {
           return;
         }
 
+        // Attach invoiceClosed fallback listener (some clients don't call callback)
+        const webapp = window.Telegram?.WebApp as unknown as {
+          onEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
+          offEvent?: (event: 'invoiceClosed', handler: (e: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => void) => void;
+        } | undefined;
+        let closedHandled = false;
+        const offIfAny = () => {
+          if (webapp && typeof webapp.offEvent === 'function' && handler) {
+            try { webapp.offEvent('invoiceClosed', handler); } catch {}
+          }
+        };
+        const onPaid = async () => {
+          closedHandled = true;
+          if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
+          if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
+          try { await saveGameState(); } catch {}
+          offIfAny();
+        };
+        const handler = (event: { status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => {
+          if (!event || !event.status) return;
+          if (event.status === 'paid') onPaid();
+          else if (event.status === 'cancelled') { closedHandled = true; offIfAny(); }
+          else if (event.status === 'failed') { closedHandled = true; offIfAny(); }
+        };
+        if (webapp && typeof webapp.onEvent === 'function') {
+          try { webapp.onEvent('invoiceClosed', handler); } catch {}
+        }
+
         if (typeof tg.openInvoice === 'function') {
           tg.openInvoice(data.invoiceUrl, async (status) => {
-            if (status === 'paid') {
-              if (selectedPkg.coins > 0) addCoins(selectedPkg.coins);
-              if (selectedPkg.emeralds > 0) addEmeralds(selectedPkg.emeralds);
-              try { await saveGameState(); } catch {}
-            }
+            if (status === 'paid') await onPaid();
           });
+          // Failsafe timeout: if invoice closes without callback, rely on 'invoiceClosed' or ignore
+          setTimeout(() => { if (!closedHandled) offIfAny(); }, 120000);
         } else {
           // Fallback: open link
           window.open(data.invoiceUrl, '_blank');
