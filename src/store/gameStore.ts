@@ -933,6 +933,18 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const plot = farmPlots.find(p => p.id === plotId);
     
     if (!plot || plot.isUnlocked) return;
+    
+    // Check if previous plot is unlocked (sequential unlocking)
+    const plotNumber = parseInt(plotId.replace('plot-', ''));
+    if (plotNumber > 2) { // Skip check for plot-1 (free) and plot-2 (first paid)
+      const previousPlotId = `plot-${plotNumber - 1}`;
+      const previousPlot = farmPlots.find(p => p.id === previousPlotId);
+      if (!previousPlot?.isUnlocked) {
+        showToast('Спочатку розблокуйте попередню грядку', 'warning');
+        return;
+      }
+    }
+    
     const payWithEmeralds = plot.unlockCurrency === 'emeralds';
     const canPay = payWithEmeralds ? user.emeralds >= plot.unlockPrice : user.coins >= plot.unlockPrice;
     if (!canPay) {
@@ -1475,6 +1487,25 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
               })
             : currentState.farmPlots;
 
+          // Fix sequential plot unlocking - ensure plots are unlocked in order
+          const fixedPlots = migratedPlots.map((plot: FarmPlot, index: number) => {
+            const plotNumber = index + 1;
+            
+            // Plot 1 is always unlocked
+            if (plotNumber === 1) {
+              return { ...plot, isUnlocked: true };
+            }
+            
+            // For other plots, check if previous plot is unlocked
+            const previousPlot = migratedPlots[plotNumber - 2]; // index - 1 for previous plot
+            if (previousPlot?.isUnlocked) {
+              return plot; // Keep current state
+            } else {
+              // If previous plot is not unlocked, this plot should be locked
+              return { ...plot, isUnlocked: false };
+            }
+          });
+
           const migratedSelectedPlant = mapType(savedState.selectedPlantType) as PlantType | null;
           
           // Ensure all achievement types are present (for backward compatibility)
@@ -1519,7 +1550,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
           set({
             user: mergedUser,
             warehouse: migratedWarehouse,
-            farmPlots: migratedPlots,
+            farmPlots: fixedPlots,
             achievements: mergedAchievements,
             exchange: exchangeState,
             upgrades: savedState.upgrades || currentState.upgrades || {
@@ -1682,6 +1713,13 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         giftCoins: 0,
         giftEmeralds: 0,
       },
+    });
+  },
+
+  // Reset farm plots to default state
+  resetFarmPlots: () => {
+    set({
+      farmPlots: generateFarmPlots(),
     });
   },
 }));

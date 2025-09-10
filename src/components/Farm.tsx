@@ -402,11 +402,11 @@ export const Farm = () => {
             Грядки: {farmPlots.filter((p) => p.isUnlocked).length}/15
           </h3>
           {(() => {
+            const unlockedCount = farmPlots.filter((p) => p.isUnlocked).length;
             const lockedPlots = farmPlots.filter((p) => !p.isUnlocked);
             const nextPlot = lockedPlots[0]; // First locked plot
 
-
-            if (nextPlot) {
+            if (unlockedCount < 15 && nextPlot) {
               return (
                 <div className="text-sm text-gray-600 flex items-center space-x-1">
                   <span>Наступна:</span>

@@ -228,4 +228,7 @@ export interface GameActions {
   checkDailyGift: () => void;
   claimDailyGift: () => void;
   closeDailyGreetingModal: () => void;
+
+  // Farm plot management
+  resetFarmPlots: () => void;
 }
