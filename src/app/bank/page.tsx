@@ -249,15 +249,47 @@ export default function BankPage() {
                     )}
                     <div className="text-base flex items-center whitespace-nowrap font-bold text-gray-800">⭐ {pkg.price}</div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePurchase(pkg.id);
-                    }}
-                    className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm font-semibold"
-                  >
-                    Купити
-                  </button>
+                  <div className="mt-2 flex items-center justify-end space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePurchase(pkg.id);
+                      }}
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm font-semibold"
+                    >
+                      Купити
+                    </button>
+                    {/* Fallback: send invoice via bot DM */}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const tg = window.Telegram?.WebApp as { initDataUnsafe?: { user?: { id?: number } } } | undefined;
+                          const chatId = tg?.initDataUnsafe?.user?.id;
+                          if (!chatId) {
+                            alert('Не знайдено Telegram userId');
+                            return;
+                          }
+                          const resp = await fetch('/api/payments/send-invoice', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ chatId, title: pkg.name, description: pkg.name, payload: `emeralds_${pkg.emeralds}`, amountStars: pkg.price })
+                          });
+                          const data = await resp.json();
+                          if (data?.success) {
+                            alert('Інвойс надіслано в чат з ботом. Відкрийте DM з @MiniFarmApp_bot і завершіть оплату.');
+                          } else {
+                            alert(`Помилка надсилання інвойсу: ${data?.error || 'невідомо'}`);
+                          }
+                        } catch {
+                          alert('Помилка запиту до бота');
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-xs font-semibold"
+                    >
+                      Через бот
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
