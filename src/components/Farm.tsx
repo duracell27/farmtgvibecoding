@@ -757,6 +757,10 @@ export const Farm = () => {
             <Image src="/images/монета.png" alt="Банк" width={20} height={20} className="w-7 h-7 object-contain" />
             <span className="text-xl font-bold">Банк</span>
           </Link>
+          <Link href="/chat" className="flex bg-gray-700 rounded-lg p-2 space-x-2 text-white hover:bg-gray-800 font-medium">
+            <span>💬</span>
+            <span className="text-xl font-bold">Чат</span>
+          </Link>
         </div>
       </div>
 

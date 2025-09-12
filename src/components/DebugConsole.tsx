@@ -18,8 +18,8 @@ export default function DebugConsole() {
       }).join(' ')}`;
       setLines(prev => [...prev.slice(-200), msg]);
     };
-    console.log = (...args: unknown[]) => { push('[log]', args); originalLog.current && originalLog.current(...args); };
-    console.error = (...args: unknown[]) => { push('[error]', args); originalError.current && originalError.current(...args); };
+    console.log = (...args: unknown[]) => { push('[log]', args); if (originalLog.current) { originalLog.current(...args); } };
+    console.error = (...args: unknown[]) => { push('[error]', args); if (originalError.current) { originalError.current(...args); } };
     return () => {
       if (originalLog.current) console.log = originalLog.current;
       if (originalError.current) console.error = originalError.current;

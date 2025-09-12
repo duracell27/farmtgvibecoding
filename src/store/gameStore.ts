@@ -340,6 +340,32 @@ const calculateLevelReward = (level: number): number => {
   return Math.floor(10 * Math.pow(1.40, level - 1));
 };
 
+// Watering time reduction per equipment level (seconds)
+// Level 1: 15s (base); Level 10: 300s
+const getWateringReductionSeconds = (level: number): number => {
+  const lvl = Math.max(1, Math.min(10, level || 1));
+  switch (lvl) {
+    case 2: return 25;
+    case 3: return 40;
+    case 4: return 60;
+    case 5: return 85;
+    case 6: return 115;
+    case 7: return 150;
+    case 8: return 190;
+    case 9: return 240;
+    case 10: return 300;
+    default: return 15; // level 1
+  }
+};
+
+// Fertilizing delay before allowed to apply (milliseconds)
+// Level 1: 120s, Level 10: 30s (linear -10s per level)
+const getFertilizerDelayMs = (level: number): number => {
+  const lvl = Math.max(1, Math.min(10, level || 1));
+  const seconds = Math.max(30, 120 - (lvl - 1) * 10);
+  return seconds * 1000;
+};
+
 // Helper function to calculate coin bonus percentage based on achievements
 const calculateCoinBonusPercentage = (achievements: Achievement[]): number => {
   const totalLevels = achievements.reduce((sum, achievement) => {
@@ -482,6 +508,12 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
         activeTrack: 'power',
         currentPowerTask: nextTask,
         currentPowerPlant: randomPlant,
+        // Reset per-task progress counters
+        progress: {
+          totalWaterings: 0,
+          totalFertilizers: 0,
+          harvestsByPlant: {},
+        },
       },
     });
     // Persist immediately (prevents task reset on reload)
@@ -740,15 +772,15 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const now = Date.now();
     const WATERING_COOLDOWN = 15000; // 15 seconds in milliseconds
     const WATERING_EXPERIENCE = 10;
-    const WATERING_TIME_REDUCTION = 15; // seconds
     
     // Check if enough time has passed since last watering
     if (now - plot.plant.lastWateredAt < WATERING_COOLDOWN) {
       return; // Still in cooldown
     }
     
-    // Reduce plant time by 15 seconds (but not below 0)
-    const newTimeLeft = Math.max(0, plot.plant.timeLeft - WATERING_TIME_REDUCTION);
+    // Reduce plant time by equipment-based seconds (but not below 0)
+    const reductionSeconds = getWateringReductionSeconds((get().equipment?.watering.level || 1));
+    const newTimeLeft = Math.max(0, plot.plant.timeLeft - reductionSeconds);
     
     // Update plant with new time and last watered timestamp
     const updatedPlant = {
@@ -1004,7 +1036,7 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     
     if (plot && plot.plant && !plot.plant.isReady && !plot.plant.fertilizerApplied && user.coins >= fertilizerData.price) {
       const now = Date.now();
-      const FERTILIZER_DELAY = 120000; // 2 minutes after planting
+      const FERTILIZER_DELAY = getFertilizerDelayMs((get().equipment?.fertilizing.level || 1));
       
       // Check if 2 minutes have passed since planting
       const timeSincePlanting = now - plot.plant.plantedAt;
@@ -1861,14 +1893,14 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
     const plots = state.farmPlots;
     const now = Date.now();
     const WATERING_COOLDOWN = 15000;
-    const WATERING_TIME_REDUCTION = 15;
     const eligible = plots.filter(p => p.plant && !p.plant.isReady && now - p.plant.lastWateredAt >= WATERING_COOLDOWN);
     if (eligible.length === 0) return;
     const updatedPlots = plots.map(p => {
       if (!p.plant) return p;
       const eligibleThis = now - p.plant.lastWateredAt >= WATERING_COOLDOWN && !p.plant.isReady;
       if (!eligibleThis) return p;
-      const newTimeLeft = Math.max(0, p.plant.timeLeft - WATERING_TIME_REDUCTION);
+      const reduction = getWateringReductionSeconds((get().equipment?.watering.level || 1));
+      const newTimeLeft = Math.max(0, p.plant.timeLeft - reduction);
       return { ...p, plant: { ...p.plant, timeLeft: newTimeLeft, isReady: newTimeLeft === 0, lastWateredAt: now } };
     });
     // experience per watered plot with equipment multiplier and bonus
